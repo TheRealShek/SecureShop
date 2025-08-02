@@ -1,0 +1,17 @@
+[
+  {
+    "email": "buyer@example.com",
+    "password": "buyer123",
+    "role": "buyer"
+  },
+  {
+    "email": "seller@example.com",
+    "password": "seller123",
+    "role": "seller"
+  },
+  {
+    "email": "user@example.com",
+    "password": "password123",
+    "role": "buyer"
+  }
+] 
