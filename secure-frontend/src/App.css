@@ -1,10 +1,11 @@
+/* App-specific styles - minimal to avoid conflicts with Tailwind */
+
+/* Remove the default centering and constraints */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
 }
 
+/* Keep useful logo animations */
 .logo {
   height: 6em;
   padding: 1.5em;

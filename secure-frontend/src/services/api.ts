@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Product, CartItem, User } from '../types';
+import { safeParseProducts } from '../utils/typeGuards';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -29,7 +30,18 @@ api.interceptors.response.use(
 );
 
 export const ProductService = {
-  getAll: () => api.get<Product[]>('/api/products').then(res => res.data),
+  getAll: async (): Promise<Product[]> => {
+    try {
+      const response = await api.get('/api/products');
+      const data = response.data;
+      
+      // Use type guard to safely parse the response
+      return safeParseProducts(data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
   getById: (id: string) => api.get<Product>(`/api/products/${id}`).then(res => res.data),
   create: (data: Omit<Product, 'id' | 'createdAt' | 'sellerId'>) => 
     api.post<Product>('/api/products', data).then(res => res.data),

@@ -1,26 +1,16 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ProductService, CartService } from '../services/api';
-import { Product } from '../types';
+import { useProductData } from '../hooks/useProductData';
+import { useAddToCart } from '../hooks/useAddToCart';
+import { QuantitySelector } from '../components/QuantitySelector';
+import { ReviewModal } from '../components/ReviewModal';
 
 export function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
-  const queryClient = useQueryClient();
 
-  const { data: product, isLoading, error } = useQuery<Product>({
-    queryKey: ['product', id],
-    queryFn: () => ProductService.getById(id!),
-    enabled: !!id,
-  });
-
-  const addToCartMutation = useMutation({
-    mutationFn: () => CartService.addItem(id!, quantity),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-    },
-  });
+  const { data: product, isLoading, error } = useProductData(id);
+  const addToCartMutation = useAddToCart();
 
   if (isLoading) {
     return (
@@ -39,7 +29,9 @@ export function ProductDetailsPage() {
   }
 
   const handleAddToCart = () => {
-    addToCartMutation.mutate();
+    if (id) {
+      addToCartMutation.mutate({ productId: id, quantity });
+    }
   };
 
   return (
@@ -71,32 +63,31 @@ export function ProductDetailsPage() {
           </div>
 
           <div className="mt-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Quantity</h3>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                >
-                  -
-                </button>
-                <span className="text-gray-900">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+            <QuantitySelector
+              initialQuantity={quantity}
+              onChange={setQuantity}
+              max={99}
+            />
 
-            <button
-              onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending}
-              className="mt-8 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {addToCartMutation.isPending ? 'Adding...' : 'Add to cart'}
-            </button>
+            <div className="mt-8 space-y-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={addToCartMutation.isPending}
+                className="flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+              >
+                {addToCartMutation.isPending ? 'Adding...' : 'Add to cart'}
+              </button>
+
+              <ReviewModal 
+                productId={id!} 
+                productName={product.name}
+                trigger={
+                  <button className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-8 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Write a Review
+                  </button>
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
