@@ -17,3 +17,4 @@ export function RootRedirect() {
   // If authenticated, go to dashboard; otherwise go to login
   return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
 }
+ 
