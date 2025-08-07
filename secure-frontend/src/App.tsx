@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RootRedirect } from './components/RootRedirect';
@@ -20,11 +21,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Routes>
-          {/* Root route: redirect based on auth status and role */}
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/not-authorized" element={<NotAuthorizedPage />} />
+        <ToastProvider>
+          <Routes>
+            {/* Root route: redirect based on auth status and role */}
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/not-authorized" element={<NotAuthorizedPage />} />
           
           {/* Role-based protected routes */}
           {/* Admin Dashboard - only admin */}
@@ -89,10 +91,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
-        </Routes>
+          </Routes>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
-}
-
-export default App;
+}export default App;

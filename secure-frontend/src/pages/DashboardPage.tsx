@@ -225,6 +225,7 @@ export function DashboardPage() {
           onAddToCart={handleAddToCart}
           onToggleFavorite={handleToggleFavorite}
           favorites={favorites}
+          maxProducts={25}
           emptyMessage={
             searchTerm 
               ? `No products found matching "${searchTerm}". Try a different search term.`
