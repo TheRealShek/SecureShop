@@ -2,36 +2,45 @@ import { FormEvent, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LockClosedIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { getRoleBasedRedirect } from '../utils/roleUtils';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isAuthenticated, loading } = useAuth();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { login, isAuthenticated, loading, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Only redirect if user explicitly navigated to login while already authenticated
   useEffect(() => {
-    if (!loading && isAuthenticated && location.state?.from) {
-      // Only redirect if user was redirected here from a protected route
-      const from = location.state.from.pathname || '/dashboard';
-      navigate(from, { replace: true });
+    if (!loading && isAuthenticated && role) {
+      if (location.state?.from) {
+        // Only redirect if user was redirected here from a protected route
+        const from = location.state.from.pathname || getRoleBasedRedirect(role);
+        navigate(from, { replace: true });
+      } else {
+        // Direct navigation to login while authenticated - redirect to role-based page
+        navigate(getRoleBasedRedirect(role), { replace: true });
+      }
     }
-  }, [isAuthenticated, loading, navigate, location.state]);
+  }, [isAuthenticated, loading, navigate, location.state, role]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoggingIn(true);
     
     try {
       await login(email, password);
-      // Redirect to intended destination or dashboard
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // Note: The role-based redirect will happen in the useEffect above
+      // once the user and role are set in the AuthContext
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
       console.error('Login error:', err);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -125,13 +134,13 @@ export function LoginPage() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || isLoggingIn}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <LockClosedIcon className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400 transition-colors duration-200" />
                 </span>
-                {loading ? 'Signing in...' : 'Sign in'}
+                {isLoggingIn ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>

@@ -14,18 +14,32 @@ function classNames(...classes: string[]) {
 }
 
 export function Layout() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, role } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  const navigation: NavigationItem[] = useMemo(() => [
-    { name: 'Products', href: '/products' },
-    ...(isAuthenticated ? [
-      { name: 'Cart', href: '/cart' },
-      { name: 'Dashboard', href: '/dashboard' },
-      ...(user?.role === 'seller' ? [{ name: 'Manage Products', href: '/manage-products' }] : []),
-    ] : []),
-  ], [isAuthenticated, user?.role]);
+  const navigation: NavigationItem[] = useMemo(() => {
+    const baseNav = [
+      { name: 'Products', href: '/products' },
+    ];
+
+    if (isAuthenticated && role) {
+      // Add role-specific navigation items
+      if (role === 'buyer' || role === 'admin') {
+        baseNav.push({ name: 'Cart', href: '/cart' });
+      }
+      
+      if (role === 'admin') {
+        baseNav.push({ name: 'Dashboard', href: '/dashboard' });
+      }
+      
+      if (role === 'seller' || role === 'admin') {
+        baseNav.push({ name: 'Manage Products', href: '/manage-products' });
+      }
+    }
+
+    return baseNav;
+  }, [isAuthenticated, role]);
 
   const handleLogout = async () => {
     try {
