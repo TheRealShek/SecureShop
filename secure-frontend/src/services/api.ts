@@ -61,6 +61,51 @@ export const ProductService = {
     }
   },
 
+  getPaginated: async (limit: number, offset: number): Promise<{ products: Product[]; totalCount: number }> => {
+    try {
+      // First, get the total count
+      const { count, error: countError } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.error('Supabase error counting products:', countError);
+        throw new Error(`Failed to count products: ${countError.message}`);
+      }
+
+      // Then fetch the paginated products
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error('Supabase error fetching products:', error);
+        throw new Error(`Failed to fetch products: ${error.message}`);
+      }
+
+      // Transform Supabase data to match our Product interface
+      const products: Product[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image_url || item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id || item.sellerId || '',
+        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+      }));
+
+      return {
+        products,
+        totalCount: count || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching paginated products:', error);
+      throw error;
+    }
+  },
+
   getById: async (id: string): Promise<Product> => {
     try {
       const { data, error } = await supabase

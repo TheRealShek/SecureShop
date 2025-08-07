@@ -200,6 +200,49 @@ npm run lint
 
 ---
 
+## Bug Fixes & Improvements
+
+### Product List Persistence Issue (Fixed)
+
+**Problem:** 
+- On initial load, `/products` page fetched and displayed products correctly
+- When navigating to `/product/:id` and back to `/products`, the product list would disappear or become empty
+- This happened due to state synchronization issues between local React state and React Query cache
+
+**Root Cause:**
+- The original `usePaginatedProducts` hook mixed local `useState` with React Query caching
+- When components remounted (navigation back), local state reset while React Query cache remained inconsistent
+- Manual pagination state management led to synchronization problems
+
+**Solution Implemented:**
+- **Refactored to `useInfiniteQuery`:** Replaced custom pagination logic with React Query's built-in infinite queries
+- **Eliminated Manual State:** Removed local state management for products, offset, and pagination
+- **Proper Caching:** React Query now automatically handles data persistence and restoration
+- **Better Performance:** Reduced unnecessary API calls through intelligent caching
+
+**Technical Details:**
+```typescript
+// Before: Manual state + React Query (problematic)
+const [allProducts, setAllProducts] = useState<Product[]>([]);
+const [offset, setOffset] = useState(0);
+
+// After: Pure React Query with useInfiniteQuery (fixed)
+const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+  queryKey: ['products-paginated'],
+  queryFn: async ({ pageParam }) => ProductService.getPaginated(25, pageParam),
+  initialPageParam: 0,
+  // ...proper pagination logic
+});
+```
+
+**Result:**
+- Products now persist correctly when navigating back from product details
+- "Load More" functionality works seamlessly across navigation
+- Better user experience with faster page loads due to caching
+- More maintainable code following React Query best practices
+
+---
+
 ## Logout & Session
 - **Logout:** Use the logout button in the UI (calls Supabase signOut)
 - **Session Expiry:** Auto-redirects to login on session loss

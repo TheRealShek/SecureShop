@@ -1,18 +1,24 @@
 import { Link } from 'react-router-dom';
-import { useProducts } from '../hooks';
+import { usePaginatedProducts } from '../hooks';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
 import { formatPrice } from '../utils/currency';
 
 export function ProductsPage() {
-  const { products, isLoading, error } = useProducts();
-
-  // Limit to 25 products for better performance
-  const displayProducts = products.slice(0, 25);
+  const { 
+    products, 
+    isLoading, 
+    isLoadingMore, 
+    error, 
+    hasMore, 
+    loadMore, 
+    remainingCount 
+  } = usePaginatedProducts();
 
   if (isLoading) {
     return (
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading products...</p>
       </div>
     );
   }
@@ -49,10 +55,11 @@ export function ProductsPage() {
           </div>
 
           {/* Product count indicator */}
-          {displayProducts.length < products.length && (
+          {products.length > 0 && (
             <div className="mb-6 text-center">
               <p className="text-sm text-gray-600">
-                Showing {displayProducts.length} of {products.length} products
+                Showing {products.length} products
+                {hasMore && ` • ${remainingCount} more available`}
               </p>
             </div>
           )}
@@ -60,7 +67,7 @@ export function ProductsPage() {
           {/* Responsive Product Grid */}
           <div className="p-6 bg-gray-50 rounded-2xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {displayProducts.length === 0 ? (
+              {products.length === 0 ? (
                 <div className="col-span-full text-center py-16">
                   <div className="mx-auto h-24 w-24 text-gray-400 mb-6">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-full h-full">
@@ -71,7 +78,7 @@ export function ProductsPage() {
                   <p className="text-gray-500">Check back later for new products</p>
                 </div>
               ) : (
-                displayProducts.map((product) => (
+                products.map((product) => (
                   <div key={product.id} className="group relative bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden">
                     {/* Product Image Container */}
                     <div className="aspect-square w-full overflow-hidden bg-gray-100">
@@ -108,14 +115,25 @@ export function ProductsPage() {
               )}
             </div>
             
-            {/* Load more indicator */}
-            {displayProducts.length < products.length && (
+            {/* Load more section */}
+            {hasMore && (
               <div className="mt-8 text-center">
                 <p className="text-sm text-gray-500 mb-4">
-                  {products.length - displayProducts.length} more products available
+                  {remainingCount} more products available
                 </p>
-                <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                  Load More Products
+                <button 
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Products'
+                  )}
                 </button>
               </div>
             )}
