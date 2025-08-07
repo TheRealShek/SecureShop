@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks';
-import { DEFAULT_PRODUCT_VALUES } from '../utils/typeGuards';
+import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
+import { formatPrice } from '../utils/currency';
 
 export function ProductsPage() {
   const { products, isLoading, error } = useProducts();
@@ -47,7 +48,7 @@ export function ProductsPage() {
                 <div key={product.id} className="group relative">
                   <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
                     <img
-                      src={product.image}
+                      src={getProductImageUrl(product)}
                       alt={product.name}
                       className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                       onError={(e) => {
@@ -65,7 +66,7 @@ export function ProductsPage() {
                       </h3>
                       <p className="mt-1 text-sm text-gray-500">{product.description}</p>
                     </div>
-                    <p className="text-sm font-medium text-gray-900">${product.price}</p>
+                    <p className="text-sm font-medium text-gray-900">{formatPrice(product.price)}</p>
                   </div>
                 </div>
               ))

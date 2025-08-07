@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useProducts } from '../hooks';
 import { Banner } from '../components/Banner';
 import { ProductFilters } from '../components/ProductFilters';
 import { ProductGrid } from '../components/ProductGrid';
@@ -9,133 +10,10 @@ import {
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 
-// Mock product data
-const MOCK_PRODUCTS = [
-  {
-    id: '1',
-    name: 'Wireless Bluetooth Headphones',
-    price: 79.99,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center',
-    description: 'High-quality wireless headphones with noise cancellation',
-    category: 'electronics',
-    rating: 4.5,
-    inStock: true
-  },
-  {
-    id: '2',
-    name: 'Smart Fitness Watch',
-    price: 199.99,
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&crop=center',
-    description: 'Track your fitness goals with this advanced smartwatch',
-    category: 'electronics',
-    rating: 4.3,
-    inStock: true
-  },
-  {
-    id: '3',
-    name: 'Organic Cotton T-Shirt',
-    price: 24.99,
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&crop=center',
-    description: 'Comfortable and sustainable cotton t-shirt',
-    category: 'clothing',
-    rating: 4.7,
-    inStock: true
-  },
-  {
-    id: '4',
-    name: 'Modern Coffee Maker',
-    price: 149.99,
-    image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=400&fit=crop&crop=center',
-    description: 'Brew perfect coffee every morning',
-    category: 'home',
-    rating: 4.2,
-    inStock: false
-  },
-  {
-    id: '5',
-    name: 'Yoga Mat Premium',
-    price: 39.99,
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center',
-    description: 'Non-slip premium yoga mat for all your workouts',
-    category: 'sports',
-    rating: 4.6,
-    inStock: true
-  },
-  {
-    id: '6',
-    name: 'JavaScript Programming Book',
-    price: 34.99,
-    image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&h=400&fit=crop&crop=center',
-    description: 'Learn modern JavaScript programming',
-    category: 'books',
-    rating: 4.8,
-    inStock: true
-  },
-  {
-    id: '7',
-    name: 'Wireless Gaming Mouse',
-    price: 59.99,
-    image: 'https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=400&fit=crop&crop=center',
-    description: 'Precision gaming mouse with RGB lighting',
-    category: 'electronics',
-    rating: 4.4,
-    inStock: true
-  },
-  {
-    id: '8',
-    name: 'Designer Sunglasses',
-    price: 89.99,
-    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400&h=400&fit=crop&crop=center',
-    description: 'Stylish sunglasses with UV protection',
-    category: 'clothing',
-    rating: 4.1,
-    inStock: true
-  },
-  {
-    id: '9',
-    name: 'Indoor Plant Set',
-    price: 45.99,
-    image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop&crop=center',
-    description: 'Beautiful indoor plants to brighten your home',
-    category: 'home',
-    rating: 4.5,
-    inStock: true
-  },
-  {
-    id: '10',
-    name: 'Basketball',
-    price: 29.99,
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=400&fit=crop&crop=center',
-    description: 'Official size basketball for outdoor play',
-    category: 'sports',
-    rating: 4.3,
-    inStock: true
-  },
-  {
-    id: '11',
-    name: 'Cookbook Collection',
-    price: 49.99,
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop&crop=center',
-    description: 'Collection of world cuisine recipes',
-    category: 'books',
-    rating: 4.6,
-    inStock: true
-  },
-  {
-    id: '12',
-    name: 'Denim Jacket',
-    price: 69.99,
-    image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=400&h=400&fit=crop&crop=center',
-    description: 'Classic denim jacket for any season',
-    category: 'clothing',
-    rating: 4.4,
-    inStock: true
-  }
-];
-
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+  const { products, isLoading: productsLoading, error: productsError } = useProducts();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,11 +29,18 @@ export function DashboardPage() {
 
   // Filter products based on category and search term
   const filteredProducts = useMemo(() => {
-    let filtered = MOCK_PRODUCTS;
+    if (!products) return [];
+    
+    let filtered = products;
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      // Note: You'll need to add category field to your Product type if needed
+      // For now, we'll filter by name/description content
+      filtered = filtered.filter(product => {
+        const productContent = `${product.name} ${product.description}`.toLowerCase();
+        return productContent.includes(selectedCategory.toLowerCase());
+      });
     }
 
     // Filter by search term
@@ -164,13 +49,12 @@ export function DashboardPage() {
       filtered = filtered.filter(
         product =>
           product.name.toLowerCase().includes(search) ||
-          product.description?.toLowerCase().includes(search) ||
-          product.category?.toLowerCase().includes(search)
+          product.description?.toLowerCase().includes(search)
       );
     }
 
     return filtered;
-  }, [selectedCategory, searchTerm]);
+  }, [products, selectedCategory, searchTerm]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -188,7 +72,7 @@ export function DashboardPage() {
   // Handle add to cart
   const handleAddToCart = (productId: string) => {
     setCartItems(prev => new Set([...prev, productId]));
-    const product = MOCK_PRODUCTS.find(p => p.id === productId);
+    const product = products.find(p => p.id === productId);
     console.log(`Added ${product?.name} to cart!`);
     
     // Simple toast-like feedback
@@ -216,12 +100,41 @@ export function DashboardPage() {
   };
 
   // Loading state
-  if (authLoading) {
+  if (authLoading || productsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">
+            {authLoading ? 'Loading...' : 'Loading products...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for products
+  if (productsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
+            <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="mt-6 text-2xl font-bold text-gray-900">Failed to Load Products</h2>
+          <p className="mt-3 text-gray-600">
+            We couldn't load the products. Please try refreshing the page.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
         </div>
       </div>
     );

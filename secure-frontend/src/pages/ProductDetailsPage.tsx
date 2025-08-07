@@ -4,6 +4,8 @@ import { useProductData } from '../hooks/useProductData';
 import { useAddToCart } from '../hooks/useAddToCart';
 import { QuantitySelector } from '../components/QuantitySelector';
 import { ReviewModal } from '../components/ReviewModal';
+import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
+import { formatPriceIndian } from '../utils/currency';
 
 export function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,9 +43,12 @@ export function ProductDetailsPage() {
         <div className="lg:max-w-lg lg:self-end">
           <div className="aspect-h-1 aspect-w-1 overflow-hidden rounded-lg">
             <img
-              src={product.image}
+              src={getProductImageUrl(product)}
               alt={product.name}
               className="h-full w-full object-cover object-center"
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE;
+              }}
             />
           </div>
         </div>
@@ -54,7 +59,7 @@ export function ProductDetailsPage() {
 
           <div className="mt-3">
             <h2 className="sr-only">Product information</h2>
-            <p className="text-3xl tracking-tight text-gray-900">${product.price}</p>
+            <p className="text-3xl tracking-tight text-gray-900">{formatPriceIndian(product.price)}</p>
           </div>
 
           <div className="mt-6">

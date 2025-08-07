@@ -11,6 +11,7 @@ export interface Product {
   description: string;
   price: number;
   image: string;
+  image_url?: string; // Database field name
   sellerId: string;
   createdAt: string;
 }

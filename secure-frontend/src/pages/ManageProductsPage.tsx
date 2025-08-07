@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductService } from '../services/api';
 import { Product } from '../types';
+import { formatPrice } from '../utils/currency';
 
 export function ManageProductsPage() {
   const queryClient = useQueryClient();
@@ -94,7 +95,7 @@ export function ManageProductsPage() {
               setEditingProduct({});
               setIsModalOpen(true);
             }}
-            className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           >
             Add product
           </button>
@@ -131,7 +132,7 @@ export function ManageProductsPage() {
                       {product.description}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      ${product.price}
+                      {formatPrice(product.price)}
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                       <button

@@ -1,20 +1,16 @@
 import { useState } from 'react';
 import { ShoppingCartIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  description?: string;
-  category?: string;
-  rating?: number;
-  inStock?: boolean;
-}
+import { Product } from '../types';
+import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
+import { formatPrice } from '../utils/currency';
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & {
+    category?: string;
+    rating?: number;
+    inStock?: boolean;
+  };
   onAddToCart?: (productId: string) => void;
   onToggleFavorite?: (productId: string) => void;
   isFavorite?: boolean;
@@ -28,6 +24,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+
+  // Get the appropriate image URL with fallbacks
+  const imageUrl = getProductImageUrl(product);
 
   const handleAddToCart = () => {
     if (product.inStock !== false) {
@@ -61,7 +60,7 @@ export function ProductCard({
         )}
         
         <img
-          src={imageError ? 'https://via.placeholder.com/400x400?text=No+Image' : product.image}
+          src={imageError ? DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE : imageUrl}
           alt={product.name}
           className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-200 ${
             isImageLoading ? 'opacity-0' : 'opacity-100'
@@ -135,7 +134,7 @@ export function ProductCard({
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center space-x-2">
             <span className="text-lg font-bold text-gray-900">
-              ${product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </span>
           </div>
           
