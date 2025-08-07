@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../hooks/useCart';
 import { Fragment, useMemo, useState } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline';
@@ -15,6 +16,7 @@ function classNames(...classes: string[]) {
 
 export function Layout() {
   const { isAuthenticated, user, logout, role } = useAuth();
+  const { totalItems } = useCart();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
@@ -98,9 +100,14 @@ export function Layout() {
                     <>
                       <Link
                         to="/cart"
-                        className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none"
+                        className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none"
                       >
                         <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
+                        {totalItems > 0 && (
+                          <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium text-white">
+                            {totalItems > 99 ? '99+' : totalItems}
+                          </span>
+                        )}
                       </Link>
 
                       <Menu as="div" className="relative ml-3">

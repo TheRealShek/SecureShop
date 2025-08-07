@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -21,78 +22,80 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* Root route: redirect based on auth status and role */}
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/not-authorized" element={<NotAuthorizedPage />} />
-          
-          {/* Role-based protected routes */}
-          {/* Admin Dashboard - only admin */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <DashboardPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Seller Management - only seller and admin */}
-          <Route 
-            path="/manage-products" 
-            element={
-              <ProtectedRoute allowedRoles={['seller', 'admin']}>
-                <ManageProductsPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Routes with Layout wrapper */}
-          <Route element={<Layout />}>
-            {/* Products - all authenticated users */}
+        <CartProvider>
+          <ToastProvider>
+            <Routes>
+              {/* Root route: redirect based on auth status and role */}
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/not-authorized" element={<NotAuthorizedPage />} />
+            
+            {/* Role-based protected routes */}
+            {/* Admin Dashboard - only admin */}
             <Route 
-              path="/products" 
+              path="/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
-                  <ProductsPage />
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardPage />
                 </ProtectedRoute>
               } 
             />
             
-            {/* Product Details - all authenticated users */}
+            {/* Seller Management - only seller and admin */}
             <Route 
-              path="/products/:id" 
+              path="/manage-products" 
               element={
-                <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
-                  <ProductDetailsPage />
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <ManageProductsPage />
                 </ProtectedRoute>
               } 
             />
             
-            {/* Cart - only buyers and admin */}
+            {/* Routes with Layout wrapper */}
+            <Route element={<Layout />}>
+              {/* Products - all authenticated users */}
+              <Route 
+                path="/products" 
+                element={
+                  <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                    <ProductsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Product Details - all authenticated users */}
+              <Route 
+                path="/products/:id" 
+                element={
+                  <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                    <ProductDetailsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Cart - only buyers and admin */}
+              <Route 
+                path="/cart" 
+                element={
+                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                    <CartPage />
+                  </ProtectedRoute>
+                } 
+              />
+            </Route>
+            
+            {/* Catch-all route for unknown paths - requires authentication */}
             <Route 
-              path="/cart" 
+              path="*" 
               element={
-                <ProtectedRoute allowedRoles={['buyer', 'admin']}>
-                  <CartPage />
+                <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                  <NotFoundPage />
                 </ProtectedRoute>
               } 
             />
-          </Route>
-          
-          {/* Catch-all route for unknown paths - requires authentication */}
-          <Route 
-            path="*" 
-            element={
-              <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
-                <NotFoundPage />
-              </ProtectedRoute>
-            } 
-          />
-          </Routes>
-        </ToastProvider>
+            </Routes>
+          </ToastProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

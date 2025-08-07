@@ -22,3 +22,18 @@ export interface CartItem {
   quantity: number;
   product: Product;
 }
+
+// Supabase cart item type (matches database schema)
+export interface DbCartItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended cart item with product details
+export interface CartItemWithProduct extends DbCartItem {
+  products: Product;
+}

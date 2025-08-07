@@ -5,3 +5,5 @@ export { AuthenticatedHome } from './AuthenticatedHome';
 export { ProtectedRoute } from './ProtectedRoute';
 export { Layout } from './Layout';
 export { RootRedirect } from './RootRedirect';
+export { Cart } from './cart';
+export { CartErrorBoundary } from './CartErrorBoundary';

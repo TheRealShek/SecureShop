@@ -1,9 +1,11 @@
-import { Link } from 'react-router-dom';
 import { usePaginatedProducts } from '../hooks';
-import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
-import { formatPrice } from '../utils/currency';
+import { useCart } from '../hooks';
+import { ProductGrid } from '../components/ProductGrid';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ProductsPage() {
+  const { user } = useAuth();
+  const { addToCart } = useCart();
   const { 
     products, 
     isLoading, 
@@ -13,6 +15,16 @@ export function ProductsPage() {
     loadMore, 
     remainingCount 
   } = usePaginatedProducts();
+
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await addToCart(productId);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    }
+  };
+
+  const isBuyer = user?.role === 'buyer';
 
   if (isLoading) {
     return (
@@ -54,87 +66,40 @@ export function ProductsPage() {
             </p>
           </div>
 
-          {/* Product count indicator */}
-          {products.length > 0 && (
-            <div className="mb-6 text-center">
-              <p className="text-sm text-gray-600">
-                Showing {products.length} products
-                {hasMore && ` • ${remainingCount} more available`}
-              </p>
-            </div>
-          )}
-
-          {/* Responsive Product Grid */}
-          <div className="p-6 bg-gray-50 rounded-2xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {products.length === 0 ? (
-                <div className="col-span-full text-center py-16">
-                  <div className="mx-auto h-24 w-24 text-gray-400 mb-6">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-full h-full">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-medium text-gray-900 mb-3">No products available</h3>
-                  <p className="text-gray-500">Check back later for new products</p>
-                </div>
-              ) : (
-                products.map((product) => (
-                  <div key={product.id} className="group relative bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden">
-                    {/* Product Image Container */}
-                    <div className="aspect-square w-full overflow-hidden bg-gray-100">
-                      <img
-                        src={getProductImageUrl(product)}
-                        alt={product.name}
-                        className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE;
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Product Info */}
-                    <div className="p-4">
-                      <div className="min-h-[100px] flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2">
-                            <Link to={`/products/${product.id}`} className="hover:text-indigo-600 transition-colors">
-                              <span aria-hidden="true" className="absolute inset-0" />
-                              {product.name}
-                            </Link>
-                          </h3>
-                          <p className="text-xs text-gray-500 line-clamp-2">{product.description}</p>
-                        </div>
-                        
-                        <div className="mt-3">
-                          <p className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+          {/* Enhanced Product Grid with all improvements */}
+          <div className="bg-gray-50 rounded-2xl">
+            <ProductGrid
+              products={products}
+              onAddToCart={isBuyer ? handleAddToCart : undefined}
+              onToggleFavorite={undefined} // Could be enhanced later
+              favorites={new Set()} // Could be enhanced later
+              loading={false} // We handle loading state above
+              emptyMessage="Check back later for new products"
+              maxProducts={products.length} // Show all loaded products
+            />
             
             {/* Load more section */}
             {hasMore && (
-              <div className="mt-8 text-center">
-                <p className="text-sm text-gray-500 mb-4">
-                  {remainingCount} more products available
-                </p>
-                <button 
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More Products'
-                  )}
-                </button>
+              <div className="px-6 lg:px-8 pb-6 lg:pb-8 text-center">
+                <div className="pt-6 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-4 font-medium">
+                    {remainingCount} more products available
+                  </p>
+                  <button 
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="inline-flex items-center px-8 py-3 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-3"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Products'
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>

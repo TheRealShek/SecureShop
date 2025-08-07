@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeftIcon, HeartIcon, ShareIcon, StarIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { useProductData } from '../hooks/useProductData';
-import { useAddToCart } from '../hooks/useAddToCart';
+import { useCart } from '../hooks/useCart';
+import { useAuth } from '../contexts/AuthContext';
 import { QuantitySelector } from '../components/QuantitySelector';
 import { ReviewModal } from '../components/ReviewModal';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
@@ -14,21 +15,33 @@ export function ProductDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isAddingToCartLocal, setIsAddingToCartLocal] = useState(false);
 
   const { data: product, isLoading, error } = useProductData(id);
-  const addToCartMutation = useAddToCart();
 
   // Mock product gallery (you can extend this to support multiple images)
   const productImages = product ? [getProductImageUrl(product)] : [];
   const selectedImageIndex = 0; // For now, always show first image
 
-  useEffect(() => {
-    if (addToCartMutation.isSuccess) {
-      showToast(`${product?.name} added to cart! Quantity: ${quantity}`, 'success');
+  const handleAddToCart = async () => {
+    if (!product || isAddingToCartLocal) return;
+    
+    setIsAddingToCartLocal(true);
+    try {
+      await addToCart(product.id);
+      showToast(`${product.name} added to cart! Quantity: ${quantity}`, 'success');
+    } catch (error) {
+      showToast('Failed to add to cart', 'error');
+    } finally {
+      setIsAddingToCartLocal(false);
     }
-  }, [addToCartMutation.isSuccess, product?.name, quantity, showToast]);
+  };
+
+  const isBuyer = user?.role === 'buyer';
 
   if (isLoading) {
     return (
@@ -66,12 +79,6 @@ export function ProductDetailsPage() {
     );
   }
 
-  const handleAddToCart = () => {
-    if (id && quantity > 0) {
-      addToCartMutation.mutate({ productId: id, quantity });
-    }
-  };
-
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -92,7 +99,7 @@ export function ProductDetailsPage() {
   };
 
   const isOutOfStock = false; // You can implement stock checking here
-  const canAddToCart = !addToCartMutation.isPending && quantity > 0 && !isOutOfStock;
+  const canAddToCart = !isAddingToCartLocal && quantity > 0 && !isOutOfStock && isBuyer;
 
   return (
     <div className="bg-white min-h-screen">
@@ -230,13 +237,15 @@ export function ProductDetailsPage() {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {addToCartMutation.isPending ? (
+                {isAddingToCartLocal ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                     Adding to Cart...
                   </>
                 ) : isOutOfStock ? (
                   'Out of Stock'
+                ) : !isBuyer ? (
+                  'Sign in as Buyer to Add to Cart'
                 ) : (
                   `Add ${quantity} to Cart`
                 )}
