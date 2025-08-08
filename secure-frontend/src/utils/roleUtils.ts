@@ -12,6 +12,19 @@ export interface UserWithRole extends SupabaseUser {
  */
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
+    console.log('🔍 fetchUserRole called with userId:', userId);
+    
+    // First, verify we have a valid auth user
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      console.error('❌ Auth user verification failed:', authError);
+      return null;
+    }
+    
+    console.log('✅ Auth user verified. Auth user ID:', authData.user.id);
+    console.log('🔗 Comparing IDs - Param userId:', userId, 'Auth userId:', authData.user.id);
+    console.log('📏 ID match:', userId === authData.user.id);
+
     // Use maybeSingle() to handle cases where user might not exist in users table
     const { data, error } = await supabase
       .from('users')
@@ -19,15 +32,21 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
       .eq('id', userId)
       .maybeSingle();
 
+    console.log('🗄️ Database query completed');
+    console.log('📊 Query result data:', data);
+    console.log('⚠️ Query error:', error);
+
     // Handle specific error cases
     if (error) {
-      console.error('Error fetching user role:', error.message, error.details);
+      console.error('❌ Error fetching user role:', error.message, error.details);
       return null;
     }
 
     // If no user found in users table, return default role
     if (!data) {
-      console.warn(`User ${userId} not found in users table, defaulting to buyer role`);
+      console.warn(`⚠️ User ${userId} not found in users table, defaulting to buyer role`);
+      console.log('💡 Consider running this SQL query in Supabase to check:');
+      console.log(`   SELECT role FROM users WHERE id = '${userId}';`);
       return 'buyer';
     }
 
@@ -35,14 +54,18 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
     const validRoles: UserRole[] = ['admin', 'seller', 'buyer'];
     const userRole = data.role as UserRole;
     
+    console.log('🎭 Retrieved role from database:', userRole);
+    console.log('✅ Role validation - Is valid:', validRoles.includes(userRole));
+    
     if (!validRoles.includes(userRole)) {
-      console.error(`Invalid role "${data.role}" for user ${userId}, defaulting to buyer`);
+      console.error(`❌ Invalid role "${data.role}" for user ${userId}, defaulting to buyer`);
       return 'buyer';
     }
 
+    console.log(`🎉 Successfully fetched role: ${userRole} for user ${userId}`);
     return userRole;
   } catch (error) {
-    console.error('Failed to fetch user role:', error);
+    console.error('💥 Failed to fetch user role:', error);
     return null;
   }
 };
@@ -55,7 +78,7 @@ export const getRoleBasedRedirect = (role: UserRole): string => {
     case 'admin':
       return '/dashboard';
     case 'seller':
-      return '/manage-products';
+      return '/seller/dashboard';
     case 'buyer':
       return '/products';
     default:

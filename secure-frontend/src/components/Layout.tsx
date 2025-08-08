@@ -36,7 +36,11 @@ export function Layout() {
       }
       
       if (role === 'seller' || role === 'admin') {
-        baseNav.push({ name: 'Manage Products', href: '/manage-products' });
+        baseNav.push(
+          { name: 'Seller Dashboard', href: '/seller/dashboard' },
+          { name: 'My Products', href: '/seller/products' },
+          { name: 'Orders', href: '/seller/orders' }
+        );
       }
     }
 

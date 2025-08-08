@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
-import { Product, CartItem, User } from '../types';
+import { Product, CartItem, User, Order, OrderWithDetails } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -489,4 +489,175 @@ export const UserService = {
   getProfile: () => api.get<User>('/api/user').then(res => res.data),
   updateProfile: (data: Partial<User>) => 
     api.put<User>('/api/user', data).then(res => res.data),
+};
+
+// Seller-specific product services
+export const SellerProductService = {
+  // Get products for current seller only
+  getSellerProducts: async (): Promise<Product[]> => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('seller_id', userData.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch seller products: ${error.message}`);
+      }
+
+      return (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
+      }));
+    } catch (error) {
+      console.error('Error fetching seller products:', error);
+      throw error;
+    }
+  },
+
+  // Create product (automatically assigns to current seller)
+  createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+    return ProductService.create(productData);
+  },
+
+  // Update product (only if owned by current seller)
+  updateProduct: async (id: string, updates: Partial<Product>): Promise<Product> => {
+    return ProductService.update(id, updates);
+  },
+
+  // Delete product (only if owned by current seller)
+  deleteProduct: async (id: string): Promise<void> => {
+    return ProductService.delete(id);
+  },
+};
+
+// Order management services
+export const OrderService = {
+  // Get orders for seller's products
+  getSellerOrders: async (): Promise<OrderWithDetails[]> => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Query from order_items (junction table) with joins to both orders and products
+      const { data, error } = await supabase
+        .from('order_items')
+        .select(`
+          id,
+          quantity,
+          price_at_purchase,
+          order_id,
+          product_id,
+          products:product_id (
+            id,
+            name,
+            description,
+            price,
+            image_url,
+            seller_id,
+            created_at
+          ),
+          orders:order_id (
+            id,
+            user_id,
+            status,
+            total_amount,
+            created_at,
+            updated_at,
+            users:user_id (
+              id,
+              email,
+              role
+            )
+          )
+        `)
+        .eq('products.seller_id', userData.user.id)
+        .order('orders(created_at)', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch seller orders: ${error.message}`);
+      }
+
+      // Transform the data to match OrderWithDetails interface
+      return (data || []).map(item => {
+        const product = Array.isArray(item.products) ? item.products[0] : item.products;
+        const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
+        const user = Array.isArray(order.users) ? order.users[0] : order.users;
+
+        return {
+          id: order.id,
+          user_id: order.user_id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          status: order.status,
+          total_amount: order.total_amount,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+          products: {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            image: product.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+            sellerId: product.seller_id,
+            createdAt: product.created_at,
+          },
+          users: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          },
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching seller orders:', error);
+      throw error;
+    }
+  },
+
+  // Update order status
+  updateOrderStatus: async (orderId: string, status: Order['status']): Promise<Order> => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update order status: ${error.message}`);
+      }
+
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        product_id: data.product_id,
+        quantity: data.quantity,
+        status: data.status,
+        total_amount: data.total_amount,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+  },
 };

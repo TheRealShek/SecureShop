@@ -1,0 +1,275 @@
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { SellerProductService, OrderService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+
+export function SellerDashboardPage() {
+  const { user } = useAuth();
+
+  // Fetch seller's products
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['seller-products', user?.id],
+    queryFn: SellerProductService.getSellerProducts,
+    enabled: !!user?.id,
+  });
+
+  // Fetch seller's orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ['seller-orders', user?.id],
+    queryFn: OrderService.getSellerOrders,
+    enabled: !!user?.id,
+  });
+
+  const isLoading = productsLoading || ordersLoading;
+
+  // Calculate stats
+  const totalProducts = products.length;
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  const totalRevenue = orders
+    .filter(order => order.status !== 'cancelled')
+    .reduce((sum, order) => sum + order.total_amount, 0);
+
+  // Recent orders (last 5)
+  const recentOrders = orders.slice(0, 5);
+
+  // Top products by orders
+  const productOrderCounts = orders.reduce((acc, order) => {
+    acc[order.product_id] = (acc[order.product_id] || 0) + order.quantity;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topProducts = products
+    .map(product => ({
+      ...product,
+      orderCount: productOrderCounts[product.id] || 0,
+    }))
+    .sort((a, b) => b.orderCount - a.orderCount)
+    .slice(0, 3);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Seller Dashboard</h1>
+        <p className="mt-2 text-gray-600">
+          Welcome back! Here's an overview of your store performance.
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-md">
+              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-2xl font-semibold text-gray-900">{totalProducts}</p>
+              <p className="text-sm text-gray-600">Total Products</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-md">
+              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-2xl font-semibold text-gray-900">{totalOrders}</p>
+              <p className="text-sm text-gray-600">Total Orders</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 rounded-md">
+              <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-2xl font-semibold text-gray-900">{pendingOrders}</p>
+              <p className="text-sm text-gray-600">Pending Orders</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-md">
+              <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-2xl font-semibold text-gray-900">{formatCurrency(totalRevenue)}</p>
+              <p className="text-sm text-gray-600">Total Revenue</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Orders */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">Recent Orders</h3>
+              <Link
+                to="/seller/orders"
+                className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+          <div className="p-6">
+            {recentOrders.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No orders yet</p>
+            ) : (
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center space-x-4">
+                    <img
+                      className="h-10 w-10 rounded-lg object-cover"
+                      src={order.products.image}
+                      alt={order.products.name}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {order.products.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {order.users.email} • Qty: {order.quantity}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {formatCurrency(order.total_amount)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatDate(order.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">Top Products</h3>
+              <Link
+                to="/seller/products"
+                className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+          <div className="p-6">
+            {topProducts.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">No products yet</p>
+            ) : (
+              <div className="space-y-4">
+                {topProducts.map((product) => (
+                  <div key={product.id} className="flex items-center space-x-4">
+                    <img
+                      className="h-10 w-10 rounded-lg object-cover"
+                      src={product.image}
+                      alt={product.name}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {product.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatCurrency(product.price)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {product.orderCount} orders
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-4">
+          <Link
+            to="/seller/products/add"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Product
+          </Link>
+          <Link
+            to="/seller/products"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            Manage Products
+          </Link>
+          <Link
+            to="/seller/orders"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            View Orders
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

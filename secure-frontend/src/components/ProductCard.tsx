@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
 import { formatPrice } from '../utils/currency';
@@ -11,13 +11,19 @@ interface ProductCardProps {
     inStock?: boolean;
   };
   onAddToCart?: (productId: string) => void;
+  onEdit?: (product: Product) => void;
+  onDelete?: (productId: string) => void;
+  showSellerActions?: boolean;
   // onToggleFavorite?: (productId: string) => void;
   // isFavorite?: boolean;
 }
 
 export function ProductCard({ 
   product, 
-  onAddToCart
+  onAddToCart,
+  onEdit,
+  onDelete,
+  showSellerActions = false
 }: ProductCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -86,7 +92,7 @@ export function ProductCard({
           
         </div>
         
-        {/* Card Footer - Price and Add to Cart */}
+        {/* Card Footer - Price and Actions */}
         <div className="mt-auto pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xl font-bold text-gray-900">
@@ -94,18 +100,39 @@ export function ProductCard({
             </span>
           </div>
           
-          <button
-            onClick={handleAddToCart}
-            disabled={product.inStock === false}
-            className={`w-full flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg border transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] ${
-              product.inStock === false
-                ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
-                : 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm hover:shadow-md'
-            }`}
-          >
-            <ShoppingCartIcon className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
-          </button>
+          {showSellerActions ? (
+            /* Seller Actions - Edit and Delete */
+            <div className="flex space-x-2">
+              <button
+                onClick={() => onEdit?.(product)}
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <PencilIcon className="h-4 w-4 flex-shrink-0" />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={() => onDelete?.(product.id)}
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg border border-red-600 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <TrashIcon className="h-4 w-4 flex-shrink-0" />
+                <span>Delete</span>
+              </button>
+            </div>
+          ) : (
+            /* Buyer Action - Add to Cart */
+            <button
+              onClick={handleAddToCart}
+              disabled={product.inStock === false || !onAddToCart}
+              className={`w-full flex items-center justify-center space-x-2 px-4 py-2.5 text-sm font-semibold rounded-lg border transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] ${
+                product.inStock === false || !onAddToCart
+                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                  : 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm hover:shadow-md'
+              }`}
+            >
+              <ShoppingCartIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

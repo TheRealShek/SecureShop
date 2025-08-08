@@ -9,6 +9,10 @@ interface ProductGridProps {
   loading?: boolean;
   emptyMessage?: string;
   maxProducts?: number;
+  onEdit?: (product: Product) => void;
+  onDelete?: (productId: string) => void;
+  currentUserId?: string;
+  userRole?: string;
 }
 
 export function ProductGrid({
@@ -16,7 +20,11 @@ export function ProductGrid({
   onAddToCart,
   loading = false,
   emptyMessage = "No products found",
-  maxProducts
+  maxProducts,
+  onEdit,
+  onDelete,
+  currentUserId,
+  userRole
 }: ProductGridProps) {
   
   // Show all products without limiting (since pagination handles the limiting)
@@ -68,16 +76,22 @@ export function ProductGrid({
     <div className="p-6 lg:p-8">
       {/* Responsive Grid Layout - 4x4 grid (16 items) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
-        {displayProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={{
-              ...product,
-              inStock: true // Default stock status - you can make this dynamic
-            }}
-            onAddToCart={onAddToCart}
-          />
-        ))}
+        {displayProducts.map((product) => {
+          const isOwner = userRole === 'seller' && product.sellerId === currentUserId;
+          return (
+            <ProductCard
+              key={product.id}
+              product={{
+                ...product,
+                inStock: true // Default stock status - you can make this dynamic
+              }}
+              onAddToCart={!isOwner ? onAddToCart : undefined}
+              onEdit={isOwner ? onEdit : undefined}
+              onDelete={isOwner ? onDelete : undefined}
+              showSellerActions={isOwner}
+            />
+          );
+        })}
       </div>
     </div>
   );

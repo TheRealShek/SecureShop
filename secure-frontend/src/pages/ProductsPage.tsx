@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { usePaginatedProducts, useSortedProducts } from '../hooks';
 import { useCart } from '../hooks';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductGrid } from '../components/ProductGrid';
 import { ProductSort } from '../components/ProductSort';
+import { EditProductModal } from '../components/EditProductModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useAuth } from '../contexts/AuthContext';
 import { SortOption } from '../hooks/useSortedProducts';
+import { Product } from '../types';
+import { SellerProductService } from '../services/api';
 
 export function ProductsPage() {
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const queryClient = useQueryClient();
   const [sortBy, setSortBy] = useState<SortOption>('newest-first');
+  
+  // Modal states
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
   const { 
     products, 
     isLoading, 
@@ -23,11 +35,62 @@ export function ProductsPage() {
   // Apply sorting to the products
   const sortedProducts = useSortedProducts(products, sortBy);
 
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Product> }) =>
+      SellerProductService.updateProduct(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['paginated-products'] });
+      setToast({ message: 'Product updated successfully!', type: 'success' });
+      setEditingProduct(null);
+    },
+    onError: (error: Error) => {
+      setToast({ message: `Failed to update product: ${error.message}`, type: 'error' });
+    },
+  });
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: SellerProductService.deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['paginated-products'] });
+      setToast({ message: 'Product deleted successfully!', type: 'success' });
+      setDeletingProduct(null);
+    },
+    onError: (error: Error) => {
+      setToast({ message: `Failed to delete product: ${error.message}`, type: 'error' });
+      setDeletingProduct(null);
+    },
+  });
+
   const handleAddToCart = async (productId: string) => {
     try {
       await addToCart(productId);
+      setToast({ message: 'Product added to cart!', type: 'success' });
     } catch (error) {
       console.error('Failed to add to cart:', error);
+      setToast({ message: 'Failed to add product to cart', type: 'error' });
+    }
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleDeleteProduct = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      setDeletingProduct({ id: productId, name: product.name });
+    }
+  };
+
+  const handleSaveProduct = async (productId: string, updates: Partial<Product>) => {
+    await updateProductMutation.mutateAsync({ id: productId, updates });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingProduct) {
+      deleteProductMutation.mutate(deletingProduct.id);
     }
   };
 
@@ -62,6 +125,30 @@ export function ProductsPage() {
 
   return (
     <div>
+      {/* Toast notifications */}
+      {toast && (
+        <div className={`fixed top-4 right-4 max-w-sm w-full z-50 p-4 rounded-md shadow-lg ${
+          toast.type === 'success' 
+            ? 'bg-green-50 border border-green-200 text-green-800' 
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center">
+            <div className="flex-1">
+              <p className="text-sm font-medium">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="ml-4 text-gray-400 hover:text-gray-600"
+            >
+              <span className="sr-only">Close</span>
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center mb-12">
@@ -92,6 +179,10 @@ export function ProductsPage() {
             <ProductGrid
               products={sortedProducts}
               onAddToCart={isBuyer ? handleAddToCart : undefined}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
+              currentUserId={user?.id}
+              userRole={user?.role}
               onToggleFavorite={undefined} // Could be enhanced later
               favorites={new Set()} // Could be enhanced later
               loading={false} // We handle loading state above
@@ -126,6 +217,24 @@ export function ProductsPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Product Modal */}
+      <EditProductModal
+        product={editingProduct}
+        isOpen={!!editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onSave={handleSaveProduct}
+        isLoading={updateProductMutation.isPending}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingProduct}
+        productName={deletingProduct?.name || ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeletingProduct(null)}
+        isDeleting={deleteProductMutation.isPending}
+      />
     </div>
   );
 }

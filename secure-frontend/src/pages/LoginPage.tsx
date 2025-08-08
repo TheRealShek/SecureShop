@@ -15,14 +15,21 @@ export function LoginPage() {
 
   // Only redirect if user explicitly navigated to login while already authenticated
   useEffect(() => {
+    console.log('🔄 LoginPage useEffect triggered:', { loading, isAuthenticated, role });
+    
     if (!loading && isAuthenticated && role) {
+      const redirectPath = getRoleBasedRedirect(role);
+      console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
+      
       if (location.state?.from) {
         // Only redirect if user was redirected here from a protected route
-        const from = location.state.from.pathname || getRoleBasedRedirect(role);
+        const from = location.state.from.pathname || redirectPath;
+        console.log('🔙 Redirecting to previous location:', from);
         navigate(from, { replace: true });
       } else {
         // Direct navigation to login while authenticated - redirect to role-based page
-        navigate(getRoleBasedRedirect(role), { replace: true });
+        console.log('🏠 Redirecting to role-based home:', redirectPath);
+        navigate(redirectPath, { replace: true });
       }
     }
   }, [isAuthenticated, loading, navigate, location.state, role]);
@@ -34,8 +41,22 @@ export function LoginPage() {
     
     try {
       await login(email, password);
-      // Note: The role-based redirect will happen in the useEffect above
-      // once the user and role are set in the AuthContext
+      
+      // Wait a bit for the role to be set in AuthContext, then navigate
+      setTimeout(() => {
+        // Get the latest auth state
+        const currentAuth = JSON.parse(JSON.stringify({ isAuthenticated, role }));
+        console.log('🎯 Post-login navigation check:', currentAuth);
+        
+        if (currentAuth.isAuthenticated && currentAuth.role) {
+          const redirectPath = getRoleBasedRedirect(currentAuth.role);
+          console.log(`🚀 Navigating ${currentAuth.role} to:`, redirectPath);
+          navigate(redirectPath, { replace: true });
+        } else {
+          console.log('⏳ Role not yet loaded, waiting for useEffect to handle navigation');
+        }
+      }, 100);
+      
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
       console.error('Login error:', err);

@@ -28,9 +28,9 @@ func GetPublishedProducts() ([]models.Product, error) {
 // CreateProduct creates a new product
 func CreateProduct(product *models.Product) error {
 	query := `
-		INSERT INTO products (name, description, price, image, seller_id)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id`
+		INSERT INTO products (name, description, price, image, stock, status, seller_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, created_at, updated_at`
 
 	return DB.QueryRow(
 		query,
@@ -38,6 +38,8 @@ func CreateProduct(product *models.Product) error {
 		product.Description,
 		product.Price,
 		product.Image,
+		product.Stock,
+		product.Status,
 		product.SellerID,
-	).Scan(&product.ID)
+	).Scan(&product.ID, &product.CreatedAt, &product.UpdatedAt)
 }

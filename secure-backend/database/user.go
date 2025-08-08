@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"secure-backend/models"
 )
 
@@ -27,10 +28,10 @@ func GetUserByEmail(email string) (*models.User, error) {
 // GetUserRole fetches a user's role from the users table
 func GetUserRole(userID string) (string, error) {
 	var role string
-	err := DB.Get(&role, "SELECT role FROM user_roles WHERE user_id = $1", userID)
+	err := DB.Get(&role, "SELECT role FROM users WHERE id = $1", userID)
 	if err != nil && err.Error() == "sql: no rows in result set" {
-		// If no role is found, default to "buyer"
-		return "buyer", nil
+		// If no user is found, this is an error - user should exist
+		return "", errors.New("user not found")
 	}
 	if err != nil {
 		return "", err

@@ -14,6 +14,12 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ManageProductsPage } from './pages/ManageProductsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { NotAuthorizedPage } from './pages/NotAuthorizedPage';
+// Seller pages
+import { SellerDashboardPage } from './pages/SellerDashboardPage';
+import { SellerProductsPage } from './pages/SellerProductsPage';
+import { AddProductPage } from './pages/AddProductPage';
+import { EditProductPage } from './pages/EditProductPage';
+import { SellerOrdersPage } from './pages/SellerOrdersPage';
 
 const queryClient = new QueryClient();
 
@@ -47,6 +53,52 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['seller', 'admin']}>
                   <ManageProductsPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Seller Dashboard Routes - only seller and admin */}
+            <Route 
+              path="/seller/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <SellerDashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/seller/products" 
+              element={
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <SellerProductsPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/seller/products/add" 
+              element={
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <AddProductPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/seller/products/:id/edit" 
+              element={
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <EditProductPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/seller/orders" 
+              element={
+                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                  <SellerOrdersPage />
                 </ProtectedRoute>
               } 
             />

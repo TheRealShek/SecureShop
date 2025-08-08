@@ -37,3 +37,25 @@ export interface DbCartItem {
 export interface CartItemWithProduct extends DbCartItem {
   products: Product;
 }
+
+// Order types
+export interface Order {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended order with product and user details
+export interface OrderWithDetails extends Order {
+  products: Product;
+  users: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}

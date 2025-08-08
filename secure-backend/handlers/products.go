@@ -56,6 +56,27 @@ func CreateProduct(c *gin.Context) {
 	// Set the seller ID from the authenticated user
 	product.SellerID = user.ID
 
+	// Set default values if not provided
+	if product.Status == "" {
+		product.Status = "draft"
+	}
+	if product.Stock == 0 {
+		product.Stock = 1 // Default stock
+	}
+
+	// Validate price
+	if product.Price <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Price must be greater than 0"})
+		return
+	}
+
+	// Validate status
+	validStatuses := map[string]bool{"draft": true, "published": true, "archived": true}
+	if !validStatuses[product.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be draft, published, or archived"})
+		return
+	}
+
 	// Save the product
 	if err := database.CreateProduct(&product); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})

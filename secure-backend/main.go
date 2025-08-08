@@ -109,9 +109,19 @@ func main() {
 				products.DELETE("/:id", handlers.DeleteProduct) // Delete product (seller's own only)
 			}
 
+			// Cart routes
+			cart := protected.Group("/cart")
+			{
+				cart.GET("", handlers.GetCart)               // Get user's cart
+				cart.POST("", handlers.AddToCart)            // Add item to cart
+				cart.PUT("/:id", handlers.UpdateCartItem)    // Update cart item quantity
+				cart.DELETE("/:id", handlers.RemoveCartItem) // Remove cart item
+				cart.DELETE("", handlers.ClearCart)          // Clear entire cart
+				cart.GET("/count", handlers.GetCartCount)    // Get cart item count
+			}
+
 			// User routes
 			protected.GET("/user", handlers.GetUserInfo) // Get authenticated user info
-			protected.GET("/cart", handlers.GetCart)     // Get user's cart
 		}
 	}
 

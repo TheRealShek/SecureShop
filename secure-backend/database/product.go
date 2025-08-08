@@ -8,7 +8,7 @@ import (
 func GetProductByID(id string) (*models.Product, error) {
 	var product models.Product
 	err := DB.Get(&product, `
-		SELECT id, name, description, price, image, seller_id 
+		SELECT id, name, description, price, image, stock, status, seller_id, created_at, updated_at
 		FROM products 
 		WHERE id = $1
 	`, id)
@@ -22,10 +22,10 @@ func GetProductByID(id string) (*models.Product, error) {
 func UpdateProduct(product *models.Product) error {
 	_, err := DB.Exec(`
 		UPDATE products 
-		SET name = $1, description = $2, price = $3, image = $4
-		WHERE id = $5 AND seller_id = $6
+		SET name = $1, description = $2, price = $3, image = $4, stock = $5, status = $6, updated_at = now()
+		WHERE id = $7 AND seller_id = $8
 	`, product.Name, product.Description, product.Price,
-		product.Image, product.ID, product.SellerID)
+		product.Image, product.Stock, product.Status, product.ID, product.SellerID)
 	return err
 }
 
@@ -45,7 +45,7 @@ func DeleteProduct(productID string, sellerID string) (int64, error) {
 func GetProductBySeller(productID string, sellerID string) (*models.Product, error) {
 	var product models.Product
 	err := DB.Get(&product, `
-		SELECT id, seller_id 
+		SELECT id, name, description, price, image, stock, status, seller_id, created_at, updated_at
 		FROM products 
 		WHERE id = $1 AND seller_id = $2
 	`, productID, sellerID)

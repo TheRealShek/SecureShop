@@ -4,3 +4,5 @@ export { useProducts } from './useProducts';
 export { usePaginatedProducts } from './usePaginatedProducts';
 export { useCart } from './useCart';
 export { useSortedProducts } from './useSortedProducts';
+export { useSellerProducts } from './useSellerProducts';
+export { useSellerOrders } from './useSellerOrders';
