@@ -41,5 +41,12 @@ export function safeParseProducts(data: unknown): Product[] {
  */
 export const DEFAULT_PRODUCT_VALUES = {
   EMPTY_ARRAY: [] as Product[],
-  PLACEHOLDER_IMAGE: 'https://via.placeholder.com/400x400?text=No+Image',
+  PLACEHOLDER_IMAGE: 'https://placehold.co/400x400?text=No+Image',
 } as const;
+
+/**
+ * Get the image URL for a product, with fallback to placeholder
+ */
+export function getProductImageUrl(product: Partial<Product & { image_url?: string }>): string {
+  return product.image_url || product.image || DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE;
+}

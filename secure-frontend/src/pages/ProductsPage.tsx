@@ -1,14 +1,43 @@
-import { Link } from 'react-router-dom';
-import { useProducts } from '../hooks';
-import { DEFAULT_PRODUCT_VALUES } from '../utils/typeGuards';
+import { useState } from 'react';
+import { usePaginatedProducts, useSortedProducts } from '../hooks';
+import { useCart } from '../hooks';
+import { ProductGrid } from '../components/ProductGrid';
+import { ProductSort } from '../components/ProductSort';
+import { useAuth } from '../contexts/AuthContext';
+import { SortOption } from '../hooks/useSortedProducts';
 
 export function ProductsPage() {
-  const { products, isLoading, error } = useProducts();
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+  const [sortBy, setSortBy] = useState<SortOption>('newest-first');
+  const { 
+    products, 
+    isLoading, 
+    isLoadingMore, 
+    error, 
+    hasMore, 
+    loadMore, 
+    remainingCount 
+  } = usePaginatedProducts();
+  
+  // Apply sorting to the products
+  const sortedProducts = useSortedProducts(products, sortBy);
+
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await addToCart(productId);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    }
+  };
+
+  const isBuyer = user?.role === 'buyer';
 
   if (isLoading) {
     return (
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading products...</p>
       </div>
     );
   }
@@ -34,41 +63,65 @@ export function ProductsPage() {
   return (
     <div>
       <div className="bg-white">
-        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Products</h2>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Our Products
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Discover our amazing collection of products
+            </p>
+          </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-            {products.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">No products available</p>
-              </div>
-            ) : (
-              products.map((product) => (
-                <div key={product.id} className="group relative">
-                  <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE;
-                      }}
-                    />
-                  </div>
-                  <div className="mt-4 flex justify-between">
-                    <div>
-                      <h3 className="text-sm text-gray-700">
-                        <Link to={`/products/${product.id}`}>
-                          <span aria-hidden="true" className="absolute inset-0" />
-                          {product.name}
-                        </Link>
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">{product.description}</p>
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">${product.price}</p>
-                  </div>
+          {/* Product Controls - Sort and potentially filters */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center text-sm text-gray-600">
+              <span className="font-medium">
+                {Array.isArray(products) ? products.length : 0} products found
+              </span>
+            </div>
+            <ProductSort 
+              sortBy={sortBy} 
+              onSortChange={setSortBy}
+              className="flex-shrink-0"
+            />
+          </div>
+
+          {/* Enhanced Product Grid with 4x4 layout */}
+          <div className="bg-gray-50 rounded-2xl">
+            <ProductGrid
+              products={sortedProducts}
+              onAddToCart={isBuyer ? handleAddToCart : undefined}
+              onToggleFavorite={undefined} // Could be enhanced later
+              favorites={new Set()} // Could be enhanced later
+              loading={false} // We handle loading state above
+              emptyMessage="Check back later for new products"
+              // Remove maxProducts to show all loaded products
+            />
+            
+            {/* Load more section */}
+            {hasMore && (
+              <div className="px-6 lg:px-8 pb-6 lg:pb-8 text-center">
+                <div className="pt-6 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-4 font-medium">
+                    {remainingCount} more products available
+                  </p>
+                  <button 
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="inline-flex items-center px-8 py-3 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-3"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Products'
+                    )}
+                  </button>
                 </div>
-              ))
+              </div>
             )}
           </div>
         </div>
