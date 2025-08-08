@@ -7,3 +7,4 @@ export { Layout } from './Layout';
 export { RootRedirect } from './RootRedirect';
 export { Cart } from './cart';
 export { CartErrorBoundary } from './CartErrorBoundary';
+export { ProductSort } from './ProductSort';

@@ -19,7 +19,7 @@ interface PaginatedResponse {
   totalCount: number;
 }
 
-const PRODUCTS_PER_PAGE = 25;
+const PRODUCTS_PER_PAGE = 16;
 
 export function usePaginatedProducts(): UsePaginatedProductsResult {
   const {

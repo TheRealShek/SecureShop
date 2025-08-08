@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useProducts } from '../hooks';
+import { useProducts, useSortedProducts } from '../hooks';
 import { Banner } from '../components/Banner';
 import { ProductFilters } from '../components/ProductFilters';
 import { ProductGrid } from '../components/ProductGrid';
+import { ProductSort } from '../components/ProductSort';
+import { SortOption } from '../hooks/useSortedProducts';
 import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -17,6 +19,7 @@ export function DashboardPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest-first');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cartItems, setCartItems] = useState<Set<string>>(new Set());
 
@@ -55,6 +58,9 @@ export function DashboardPage() {
 
     return filtered;
   }, [products, selectedCategory, searchTerm]);
+
+  // Apply sorting to filtered products
+  const sortedProducts = useSortedProducts(filteredProducts, sortBy);
 
   // Handle logout
   const handleLogout = async () => {
@@ -199,8 +205,8 @@ export function DashboardPage() {
           onSearchChange={setSearchTerm}
         />
 
-        {/* Results Info */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Results Info and Sort Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
           <div>
             <h2 className="text-lg font-medium text-gray-900">
               {selectedCategory === 'all' ? 'All Products' : 
@@ -212,16 +218,23 @@ export function DashboardPage() {
             </p>
           </div>
           
-          {favorites.size > 0 && (
-            <p className="text-sm text-gray-500">
-              {favorites.size} favorite{favorites.size !== 1 ? 's' : ''}
-            </p>
-          )}
+          <div className="flex items-center justify-between sm:justify-end gap-4">
+            {favorites.size > 0 && (
+              <p className="text-sm text-gray-500">
+                {favorites.size} favorite{favorites.size !== 1 ? 's' : ''}
+              </p>
+            )}
+            <ProductSort 
+              sortBy={sortBy} 
+              onSortChange={setSortBy}
+              className="flex-shrink-0"
+            />
+          </div>
         </div>
 
         {/* Product Grid */}
         <ProductGrid
-          products={filteredProducts}
+          products={sortedProducts}
           onAddToCart={handleAddToCart}
           onToggleFavorite={handleToggleFavorite}
           favorites={favorites}

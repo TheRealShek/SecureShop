@@ -1,11 +1,15 @@
-import { usePaginatedProducts } from '../hooks';
+import { useState } from 'react';
+import { usePaginatedProducts, useSortedProducts } from '../hooks';
 import { useCart } from '../hooks';
 import { ProductGrid } from '../components/ProductGrid';
+import { ProductSort } from '../components/ProductSort';
 import { useAuth } from '../contexts/AuthContext';
+import { SortOption } from '../hooks/useSortedProducts';
 
 export function ProductsPage() {
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const [sortBy, setSortBy] = useState<SortOption>('newest-first');
   const { 
     products, 
     isLoading, 
@@ -15,6 +19,9 @@ export function ProductsPage() {
     loadMore, 
     remainingCount 
   } = usePaginatedProducts();
+  
+  // Apply sorting to the products
+  const sortedProducts = useSortedProducts(products, sortBy);
 
   const handleAddToCart = async (productId: string) => {
     try {
@@ -66,16 +73,30 @@ export function ProductsPage() {
             </p>
           </div>
 
-          {/* Enhanced Product Grid with all improvements */}
+          {/* Product Controls - Sort and potentially filters */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center text-sm text-gray-600">
+              <span className="font-medium">
+                {Array.isArray(products) ? products.length : 0} products found
+              </span>
+            </div>
+            <ProductSort 
+              sortBy={sortBy} 
+              onSortChange={setSortBy}
+              className="flex-shrink-0"
+            />
+          </div>
+
+          {/* Enhanced Product Grid with 4x4 layout */}
           <div className="bg-gray-50 rounded-2xl">
             <ProductGrid
-              products={products}
+              products={sortedProducts}
               onAddToCart={isBuyer ? handleAddToCart : undefined}
               onToggleFavorite={undefined} // Could be enhanced later
               favorites={new Set()} // Could be enhanced later
               loading={false} // We handle loading state above
               emptyMessage="Check back later for new products"
-              maxProducts={products.length} // Show all loaded products
+              // Remove maxProducts to show all loaded products
             />
             
             {/* Load more section */}

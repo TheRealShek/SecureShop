@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { ShoppingCartIcon, HeartIcon } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
 import { formatPrice } from '../utils/currency';
@@ -12,15 +11,13 @@ interface ProductCardProps {
     inStock?: boolean;
   };
   onAddToCart?: (productId: string) => void;
-  onToggleFavorite?: (productId: string) => void;
-  isFavorite?: boolean;
+  // onToggleFavorite?: (productId: string) => void;
+  // isFavorite?: boolean;
 }
 
 export function ProductCard({ 
   product, 
-  onAddToCart, 
-  onToggleFavorite, 
-  isFavorite = false 
+  onAddToCart
 }: ProductCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -36,9 +33,7 @@ export function ProductCard({
     }
   };
 
-  const handleToggleFavorite = () => {
-    onToggleFavorite?.(product.id);
-  };
+
 
   const handleImageLoad = () => {
     setIsImageLoading(false);
@@ -58,7 +53,6 @@ export function ProductCard({
             <div className="animate-pulse bg-gray-300 rounded-full h-8 w-8"></div>
           </div>
         )}
-        
         <img
           src={imageError ? DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE : imageUrl}
           alt={product.name}
@@ -68,19 +62,6 @@ export function ProductCard({
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
-        
-        {/* Favorite Button */}
-        <button
-          onClick={handleToggleFavorite}
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          {isFavorite ? (
-            <HeartSolidIcon className="h-5 w-5 text-red-500" />
-          ) : (
-            <HeartIcon className="h-5 w-5 text-gray-600 hover:text-red-500 transition-colors" />
-          )}
-        </button>
-
         {/* Stock Badge */}
         {product.inStock === false && (
           <div className="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full shadow-lg">

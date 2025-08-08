@@ -14,21 +14,19 @@ interface ProductGridProps {
 export function ProductGrid({
   products,
   onAddToCart,
-  onToggleFavorite,
-  favorites = new Set(),
   loading = false,
   emptyMessage = "No products found",
-  maxProducts = 25
+  maxProducts
 }: ProductGridProps) {
   
-  // Limit products to maxProducts
-  const displayProducts = products.slice(0, maxProducts);
+  // Show all products without limiting (since pagination handles the limiting)
+  const displayProducts = maxProducts ? products.slice(0, maxProducts) : products;
   
   if (loading) {
     return (
       <div className="p-6 lg:p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
-          {[...Array(10)].map((_, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
+          {[...Array(16)].map((_, index) => (
             <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 animate-pulse overflow-hidden h-full flex flex-col">
               <div className="aspect-square bg-gray-300"></div>
               <div className="p-5 space-y-3 flex-1 flex flex-col">
@@ -68,17 +66,8 @@ export function ProductGrid({
 
   return (
     <div className="p-6 lg:p-8">
-      {/* Product count indicator */}
-      {displayProducts.length < products.length && (
-        <div className="mb-6 text-center">
-          <p className="text-sm font-medium text-gray-700 bg-gray-100 rounded-full px-4 py-2 inline-block">
-            Showing {displayProducts.length} of {products.length} products
-          </p>
-        </div>
-      )}
-      
-      {/* Responsive Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
+      {/* Responsive Grid Layout - 4x4 grid (16 items) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
         {displayProducts.map((product) => (
           <ProductCard
             key={product.id}
@@ -87,20 +76,9 @@ export function ProductGrid({
               inStock: true // Default stock status - you can make this dynamic
             }}
             onAddToCart={onAddToCart}
-            onToggleFavorite={onToggleFavorite}
-            isFavorite={favorites.has(product.id)}
           />
         ))}
       </div>
-      
-      {/* Load more indicator if needed */}
-      {displayProducts.length < products.length && (
-        <div className="mt-10 text-center">
-          <p className="text-base text-gray-600 bg-gray-50 rounded-xl px-6 py-4 inline-block font-medium">
-            {products.length - displayProducts.length} more products available
-          </p>
-        </div>
-      )}
     </div>
   );
 }
