@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { SellerProductService, OrderService } from '../services/api';
+import { SellerProductService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export function SellerDashboardPage() {
@@ -21,32 +21,36 @@ export function SellerDashboardPage() {
     },
   });
 
-  // Fetch seller's orders - only when user is authenticated, is a seller, and auth is ready
-  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ['seller-orders', user?.id],
-    queryFn: OrderService.getSellerOrders,
-    enabled: authReady && isAuthenticated && isSeller && !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      if (error.message.includes('not authenticated') || error.message.includes('403')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
-  });
+  // Fetch seller's orders - DISABLED for now since sellers should focus on products
+  // const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
+  //   queryKey: ['seller-orders', user?.id],
+  //   queryFn: OrderService.getSellerOrders,
+  //   enabled: authReady && isAuthenticated && isSeller && !!user?.id,
+  //   staleTime: 2 * 60 * 1000, // 2 minutes
+  //   retry: (failureCount, error) => {
+  //     // Don't retry on authentication errors
+  //     if (error.message.includes('not authenticated') || error.message.includes('403')) {
+  //       return false;
+  //     }
+  //     return failureCount < 2;
+  //   },
+  // });
+
+  // For now, sellers only see their products - orders functionality disabled
+  const orders: any[] = [];
+  const ordersLoading = false;
 
   const isLoading = productsLoading || ordersLoading;
 
   // Show error state if there are critical errors
-  if (productsError || ordersError) {
+  if (productsError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
           <p className="text-gray-600 mb-4">
-            {productsError?.message || ordersError?.message || 'Failed to load dashboard data'}
+            {productsError?.message || 'Failed to load dashboard data'}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -67,21 +71,12 @@ export function SellerDashboardPage() {
     .filter(order => order.status !== 'cancelled')
     .reduce((sum, order) => sum + order.total_amount, 0);
 
-  // Recent orders (last 5)
-  const recentOrders = orders.slice(0, 5);
+  // Recent orders (disabled for now)
+  // const recentOrders = orders.slice(0, 5);
 
-  // Top products by orders
-  const productOrderCounts = orders.reduce((acc, order) => {
-    acc[order.product_id] = (acc[order.product_id] || 0) + order.quantity;
-    return acc;
-  }, {} as Record<string, number>);
-
+  // Top products by orders (simplified since orders are disabled)
   const topProducts = products
-    .map(product => ({
-      ...product,
-      orderCount: productOrderCounts[product.id] || 0,
-    }))
-    .sort((a, b) => b.orderCount - a.orderCount)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   const formatCurrency = (amount: number) => {
@@ -91,14 +86,7 @@ export function SellerDashboardPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // Removed formatDate since it's not needed without orders
 
   if (isLoading) {
     return (
@@ -195,37 +183,12 @@ export function SellerDashboardPage() {
             </div>
           </div>
           <div className="p-6">
-            {recentOrders.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No orders yet</p>
-            ) : (
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center space-x-4">
-                    <img
-                      className="h-10 w-10 rounded-lg object-cover"
-                      src={order.products.image}
-                      alt={order.products.name}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {order.products.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.users.email} • Qty: {order.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        {formatCurrency(order.total_amount)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(order.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Temporarily disabled orders functionality */}
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-4xl mb-4">📊</div>
+              <p className="text-sm text-gray-500 mb-2">Orders Dashboard Coming Soon</p>
+              <p className="text-xs text-gray-400">Focus on managing your products for now</p>
+            </div>
           </div>
         </div>
 
@@ -264,7 +227,7 @@ export function SellerDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {product.orderCount} orders
+                        Latest product
                       </p>
                     </div>
                   </div>
@@ -299,12 +262,13 @@ export function SellerDashboardPage() {
           </Link>
           <Link
             to="/seller/orders"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed opacity-50"
+            onClick={(e) => e.preventDefault()}
           >
             <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
-            View Orders
+            Orders (Coming Soon)
           </Link>
         </div>
       </div>

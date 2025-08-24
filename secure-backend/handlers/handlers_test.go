@@ -74,6 +74,9 @@ func TestGetProducts(t *testing.T) {
 }
 
 // Helper function to mock authenticated user
+// Custom type for context key to avoid collisions (SA1029)
+type testUserKeyType struct{}
+
 func mockAuthUser(req *http.Request, role string) context.Context {
 	ctx := req.Context()
 	user := &models.User{
@@ -81,5 +84,5 @@ func mockAuthUser(req *http.Request, role string) context.Context {
 		Role:  role,
 		Email: "test@example.com",
 	}
-	return context.WithValue(ctx, middleware.UserKey, user)
+	return context.WithValue(ctx, testUserKeyType{}, user)
 }
