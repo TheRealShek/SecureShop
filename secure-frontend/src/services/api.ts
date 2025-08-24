@@ -13,19 +13,69 @@ const api = axios.create({
 });
 
 // Request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+api.interceptors.request.use(async (config) => {
+  console.log('📡 [DEBUG] Preparing request interceptor...');
+  
+  // Get fresh token from Supabase session instead of localStorage
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (error) {
+    console.error('❌ [DEBUG] Error getting session:', error);
+  }
+  
+  const token = session?.access_token;
+  
+  console.log('📡 [DEBUG] Outgoing request:', {
+    url: config.url,
+    method: config.method?.toUpperCase(),
+    baseURL: config.baseURL,
+    fullURL: `${config.baseURL}${config.url}`,
+    hasSession: !!session,
+    hasToken: !!token,
+    tokenLength: token?.length || 0,
+    userEmail: session?.user?.email || 'No user',
+    headers: {
+      ...config.headers,
+      Authorization: token ? `Bearer ${token.substring(0, 20)}...` : 'No token'
+    }
+  });
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.warn('⚠️ [DEBUG] No valid Supabase session token found');
   }
+  
   return config;
 });
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ [DEBUG] Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.config.url,
+      dataType: typeof response.data,
+      dataPreview: Array.isArray(response.data) 
+        ? `Array with ${response.data.length} items`
+        : typeof response.data === 'object' 
+          ? Object.keys(response.data || {}).slice(0, 5)
+          : response.data
+    });
+    return response;
+  },
   (error) => {
+    console.error('❌ [DEBUG] Response error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      message: error.message,
+      responseData: error.response?.data
+    });
+    
     if (error.response?.status === 401) {
+      console.log('🔒 [DEBUG] 401 Unauthorized - clearing token and redirecting');
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
@@ -36,40 +86,95 @@ api.interceptors.response.use(
 // Helper function to get current user role from cache
 const getCurrentUserRole = async (): Promise<string | null> => {
   try {
+    console.log('🔍 [DEBUG] Getting current user role...');
+    
     // Get current user first
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return null;
+    console.log('🔍 [DEBUG] User data from Supabase:', {
+      user: userData.user ? {
+        id: userData.user.id,
+        email: userData.user.email,
+        created_at: userData.user.created_at
+      } : null
+    });
+    
+    if (!userData.user) {
+      console.log('❌ [DEBUG] No user found');
+      return null;
+    }
     
     // Get cached role
-    return getCachedUserRole(userData.user.id);
-  } catch {
+    const role = getCachedUserRole(userData.user.id);
+    console.log('🔍 [DEBUG] Cached role for user:', {
+      userId: userData.user.id,
+      role: role
+    });
+    
+    return role;
+  } catch (error) {
+    console.error('❌ [DEBUG] Error getting user role:', error);
     return null;
   }
 };
 
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {
+    console.log('🚀 [DEBUG] ProductService.getAll() called');
+    
     const userRole = await getCurrentUserRole();
+    console.log('🔍 [DEBUG] User role determined:', userRole);
     
     // For sellers, use backend API to get role-filtered products
     if (userRole === 'seller') {
+      console.log('✅ [DEBUG] User is a seller, using backend API');
+      
       try {
+        // Check if auth token exists
+        const token = localStorage.getItem('token');
+        console.log('🔑 [DEBUG] Auth token status:', {
+          exists: !!token,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
+        });
+        
+        console.log('📡 [DEBUG] Making request to /api/products...');
         const response = await api.get('/api/products');
         
+        console.log('📦 [DEBUG] Backend response:', {
+          status: response.status,
+          statusText: response.statusText,
+          dataType: typeof response.data,
+          dataLength: Array.isArray(response.data) ? response.data.length : 'Not an array',
+          rawData: response.data
+        });
+        
         // Transform backend data to match frontend Product interface
-        const products: Product[] = (response.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          image: item.image || FALLBACK_IMAGE_URL,
-          sellerId: item.seller_id,
-          createdAt: item.created_at,
-        }));
+        const products: Product[] = (response.data || []).map((item: any) => {
+          console.log('🔄 [DEBUG] Transforming product item:', item);
+          return {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            image: item.image || FALLBACK_IMAGE_URL,
+            sellerId: item.seller_id,
+            createdAt: item.created_at,
+          };
+        });
+        
+        console.log('✅ [DEBUG] Successfully transformed products:', {
+          count: products.length,
+          products: products.map(p => ({ id: p.id, name: p.name, sellerId: p.sellerId }))
+        });
         
         return products;
       } catch (error) {
-        console.error('Error fetching seller products from backend:', error);
+        console.error('❌ [DEBUG] Error fetching seller products from backend:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          status: (error as any)?.response?.status,
+          statusText: (error as any)?.response?.statusText,
+          responseData: (error as any)?.response?.data
+        });
         throw error;
       }
     }
@@ -118,7 +223,7 @@ export const ProductService = {
           name: item.name,
           description: item.description,
           price: item.price,
-          image: item.image || 'FALLBACK_IMAGE_URL',
+          image: item.image || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
           createdAt: item.created_at,
         }));
@@ -166,7 +271,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image_url || item.image || 'FALLBACK_IMAGE_URL',
+        image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
       }));
@@ -192,7 +297,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
+        image: item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -221,7 +326,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
+        image: item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -249,7 +354,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
+        image: item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -319,7 +424,7 @@ export const CartService = {
           name: item.products.name,
           description: item.products.description,
           price: item.products.price,
-          image: item.products.image_url || 'FALLBACK_IMAGE_URL',
+          image: item.products.image_url || FALLBACK_IMAGE_URL,
           sellerId: item.products.seller_id,
           createdAt: item.products.created_at,
         }
@@ -397,7 +502,7 @@ export const CartService = {
             name: (data.products as any).name,
             description: (data.products as any).description,
             price: (data.products as any).price,
-            image: (data.products as any).image_url || 'FALLBACK_IMAGE_URL',
+            image: (data.products as any).image_url || FALLBACK_IMAGE_URL,
             sellerId: (data.products as any).seller_id,
             createdAt: (data.products as any).created_at,
           }
@@ -463,7 +568,7 @@ export const CartService = {
           name: (data.products as any).name,
           description: (data.products as any).description,
           price: (data.products as any).price,
-          image: (data.products as any).image_url || 'FALLBACK_IMAGE_URL',
+          image: (data.products as any).image_url || FALLBACK_IMAGE_URL,
           sellerId: (data.products as any).seller_id,
           createdAt: (data.products as any).created_at,
         }
@@ -536,96 +641,217 @@ export const UserService = {
 
 // Seller-specific product services
 export const SellerProductService = {
-  // Get products for current seller only
-  // Uses backend API which automatically filters by seller role
+  // Get products for current seller only - Direct Supabase Query
   getSellerProducts: async (): Promise<Product[]> => {
+    console.log('🏪 [DEBUG] SellerProductService.getSellerProducts() called - Direct Supabase');
+    
     try {
-      // Call backend API which handles role-based filtering
-      const response = await api.get('/api/products');
-      // Support both array and { products: [] } formats
-      const raw = response.data;
-      const arr = Array.isArray(raw) ? raw : (raw.products || []);
-      const products: Product[] = arr.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
-        sellerId: item.seller_id,
-        createdAt: item.created_at,
-      }));
+      // Get current authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        console.error('❌ [DEBUG] No authenticated user found:', userError);
+        throw new Error('User not authenticated');
+      }
+      
+      const userId = userData.user.id;
+      console.log('� [DEBUG] Fetching products for seller ID:', userId);
+      
+      // Query products table directly where seller_id matches current user
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('seller_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (productsError) {
+        console.error('❌ [DEBUG] Supabase query error:', productsError);
+        throw new Error(`Failed to fetch seller products: ${productsError.message}`);
+      }
+      
+      console.log('� [DEBUG] Raw Supabase products data:', productsData);
+      
+      // Transform Supabase data to match our Product interface
+      const products: Product[] = (productsData || []).map((item, index) => {
+        console.log(`🔄 [DEBUG] Transforming product ${index}:`, item);
+        
+        const mappedProduct: Product = {
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          price: Number(item.price),
+          image: item.image_url || FALLBACK_IMAGE_URL,
+          sellerId: item.seller_id,
+          createdAt: item.created_at || new Date().toISOString(),
+        };
+        
+        console.log(`✅ [DEBUG] Mapped product ${index}:`, mappedProduct);
+        return mappedProduct;
+      });
+      
+      console.log('✅ [DEBUG] Final seller products result (Direct Supabase):', {
+        count: products.length,
+        sellerQuery: `seller_id = ${userId}`,
+        products: products.map(p => ({ id: p.id, name: p.name, sellerId: p.sellerId, price: p.price }))
+      });
+      
       return products;
     } catch (error) {
-      console.error('Error fetching seller products from backend:', error);
+      console.error('❌ [DEBUG] Error in SellerProductService.getSellerProducts (Direct Supabase):', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   },
 
-  // Create product (automatically assigns to current seller)
+  // Create product (automatically assigns to current seller) - Direct Supabase
   createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+    console.log('🏪 [DEBUG] Creating product via Supabase directly:', productData);
+    
     try {
-      // Transform frontend data to backend format
-      const backendData = {
-        name: productData.name,
-        description: productData.description,
-        price: productData.price,
-        image: productData.image,
+      // Get current authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        console.error('❌ [DEBUG] No authenticated user for product creation:', userError);
+        throw new Error('User not authenticated');
+      }
+      
+      const sellerId = userData.user.id;
+      console.log('🔍 [DEBUG] Creating product for seller ID:', sellerId);
+      
+      // Insert into products table with seller_id
+      const { data: insertedData, error: insertError } = await supabase
+        .from('products')
+        .insert({
+          name: productData.name,
+          description: productData.description,
+          price: productData.price,
+          image_url: productData.image,
+          seller_id: sellerId,
+          stock: 10 // Default stock - you can make this configurable
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('❌ [DEBUG] Supabase insert error:', insertError);
+        throw new Error(`Failed to create product: ${insertError.message}`);
+      }
+      
+      console.log('✅ [DEBUG] Product created in Supabase:', insertedData);
+      
+      // Transform response to match frontend Product interface
+      const product: Product = {
+        id: insertedData.id,
+        name: insertedData.name,
+        description: insertedData.description || '',
+        price: Number(insertedData.price),
+        image: insertedData.image_url || FALLBACK_IMAGE_URL,
+        sellerId: insertedData.seller_id,
+        createdAt: insertedData.created_at,
       };
       
-      const response = await api.post('/api/products', backendData);
-      
-      // Transform backend response to frontend format
-      const item = response.data;
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
-        sellerId: item.seller_id,
-        createdAt: item.created_at,
-      };
+      console.log('✅ [DEBUG] Transformed created product:', product);
+      return product;
     } catch (error) {
-      console.error('Error creating product via backend:', error);
+      console.error('❌ [DEBUG] Error creating product via Supabase:', error);
       throw error;
     }
   },
 
-  // Update product (only if owned by current seller)
+  // Update product (only if owned by current seller) - Direct Supabase
   updateProduct: async (id: string, updates: Partial<Product>): Promise<Product> => {
+    console.log('🏪 [DEBUG] Updating product via Supabase:', { id, updates });
+    
     try {
-      // Transform frontend data to backend format
-      const backendData: any = {};
-      if (updates.name) backendData.name = updates.name;
-      if (updates.description) backendData.description = updates.description;
-      if (updates.price) backendData.price = updates.price;
-      if (updates.image) backendData.image = updates.image;
-
-      const response = await api.put(`/api/products/${id}`, backendData);
+      // Get current authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       
-      // Transform backend response to frontend format
-      const item = response.data;
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        image: item.image || 'FALLBACK_IMAGE_URL',
-        sellerId: item.seller_id,
-        createdAt: item.created_at,
+      if (userError || !userData.user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const sellerId = userData.user.id;
+      
+      // Prepare update data - map frontend fields to database fields
+      const updateData: any = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.price !== undefined) updateData.price = updates.price;
+      if (updates.image !== undefined) updateData.image_url = updates.image;
+      
+      console.log('🔄 [DEBUG] Supabase update data:', updateData);
+      
+      // Update the product, but only if it belongs to the current seller
+      const { data: updatedData, error: updateError } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', id)
+        .eq('seller_id', sellerId) // Security: only update if seller owns the product
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('❌ [DEBUG] Supabase update error:', updateError);
+        throw new Error(`Failed to update product: ${updateError.message}`);
+      }
+      
+      if (!updatedData) {
+        throw new Error('Product not found or you do not have permission to update it');
+      }
+      
+      console.log('✅ [DEBUG] Product updated in Supabase:', updatedData);
+      
+      // Transform response to match frontend Product interface
+      const product: Product = {
+        id: updatedData.id,
+        name: updatedData.name,
+        description: updatedData.description || '',
+        price: Number(updatedData.price),
+        image: updatedData.image_url || FALLBACK_IMAGE_URL,
+        sellerId: updatedData.seller_id,
+        createdAt: updatedData.created_at,
       };
+      
+      return product;
     } catch (error) {
-      console.error('Error updating product via backend:', error);
+      console.error('❌ [DEBUG] Error updating product via Supabase:', error);
       throw error;
     }
   },
 
-  // Delete product (only if owned by current seller)
+  // Delete product (only if owned by current seller) - Direct Supabase
   deleteProduct: async (id: string): Promise<void> => {
+    console.log('🏪 [DEBUG] Deleting product via Supabase:', id);
+    
     try {
-      await api.delete(`/api/products/${id}`);
+      // Get current authenticated user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const sellerId = userData.user.id;
+      
+      // Delete the product, but only if it belongs to the current seller
+      const { error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id)
+        .eq('seller_id', sellerId); // Security: only delete if seller owns the product
+      
+      if (deleteError) {
+        console.error('❌ [DEBUG] Supabase delete error:', deleteError);
+        throw new Error(`Failed to delete product: ${deleteError.message}`);
+      }
+      
+      console.log('✅ [DEBUG] Product deleted from Supabase:', id);
     } catch (error) {
-      console.error('Error deleting product via backend:', error);
+      console.error('❌ [DEBUG] Error deleting product via Supabase:', error);
       throw error;
     }
   },
@@ -733,7 +959,7 @@ export const OrderService = {
             name: product.name,
             description: product.description,
             price: product.price,
-            image: product.image_url || 'FALLBACK_IMAGE_URL',
+            image: product.image_url || FALLBACK_IMAGE_URL,
             sellerId: product.seller_id,
             createdAt: product.created_at,
           } : {} as any,

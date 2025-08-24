@@ -13,6 +13,7 @@ export interface Product {
   image: string;
   image_url?: string; // Database field name
   sellerId: string;
+  stock?: number; // Optional for backward compatibility
   createdAt: string;
 }
 

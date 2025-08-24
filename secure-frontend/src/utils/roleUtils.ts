@@ -162,25 +162,51 @@ export const cacheUserRole = (userId: string, role: UserRole): void => {
  * Get cached user role if still valid (1 hour cache)
  */
 export const getCachedUserRole = (userId: string): UserRole | null => {
+  console.log('💾 [DEBUG] getCachedUserRole called with userId:', userId);
+  
   try {
     const cached = safeLocalStorage.getItem('user_role_cache');
-    if (!cached) return null;
+    console.log('💾 [DEBUG] Raw cache data:', cached);
+    
+    if (!cached) {
+      console.log('💾 [DEBUG] No cache found');
+      return null;
+    }
 
     const cacheData = JSON.parse(cached);
+    console.log('💾 [DEBUG] Parsed cache data:', cacheData);
+    
     const oneHour = 60 * 60 * 1000;
+    const currentTime = Date.now();
+    const cacheAge = currentTime - cacheData.timestamp;
+    
+    console.log('💾 [DEBUG] Cache validation:', {
+      currentTime,
+      cacheTimestamp: cacheData.timestamp,
+      cacheAge,
+      oneHour,
+      isExpired: cacheAge > oneHour,
+      userIdMatch: cacheData.userId === userId,
+      requestedUserId: userId,
+      cachedUserId: cacheData.userId
+    });
     
     // Check if cache is expired or for different user
     if (
-      Date.now() - cacheData.timestamp > oneHour ||
+      cacheAge > oneHour ||
       cacheData.userId !== userId
     ) {
+      console.log('💾 [DEBUG] Cache invalid, removing:', {
+        reason: cacheAge > oneHour ? 'expired' : 'different user'
+      });
       safeLocalStorage.removeItem('user_role_cache');
       return null;
     }
 
+    console.log('✅ [DEBUG] Valid cache found, returning role:', cacheData.role);
     return cacheData.role;
   } catch (error) {
-    console.error('Error reading role cache:', error);
+    console.error('❌ [DEBUG] Error reading role cache:', error);
     safeLocalStorage.removeItem('user_role_cache');
     return null;
   }

@@ -4,23 +4,60 @@ import { SellerProductService, OrderService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export function SellerDashboardPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isSeller, authReady } = useAuth();
 
-  // Fetch seller's products
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  // Fetch seller's products - only when user is authenticated, is a seller, and auth is ready
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['seller-products', user?.id],
     queryFn: SellerProductService.getSellerProducts,
-    enabled: !!user?.id,
+    enabled: authReady && isAuthenticated && isSeller && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message.includes('not authenticated') || error.message.includes('403')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
-  // Fetch seller's orders
-  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+  // Fetch seller's orders - only when user is authenticated, is a seller, and auth is ready
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['seller-orders', user?.id],
     queryFn: OrderService.getSellerOrders,
-    enabled: !!user?.id,
+    enabled: authReady && isAuthenticated && isSeller && !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message.includes('not authenticated') || error.message.includes('403')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   const isLoading = productsLoading || ordersLoading;
+
+  // Show error state if there are critical errors
+  if (productsError || ordersError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+          <p className="text-gray-600 mb-4">
+            {productsError?.message || ordersError?.message || 'Failed to load dashboard data'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate stats
   const totalProducts = products.length;
@@ -76,6 +113,7 @@ export function SellerDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Seller Dashboard</h1>
         <p className="mt-2 text-gray-600">
