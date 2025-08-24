@@ -22,42 +22,16 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isBuyer, loading: authLoading } = useAuth();
-  
-  // Only provide cart functionality for authenticated buyers
-  const shouldProvideCart = isAuthenticated && isBuyer;
-  
+  const { isAuthenticated, isBuyer } = useAuth();
+
+  // Only buyers get cart context; other roles get children directly (no cart queries)
+  if (!isAuthenticated || !isBuyer) {
+    return <>{children}</>;
+  }
+
   const cartData = useCart();
-  
-  // If user is not authenticated or not a buyer, provide empty cart state
-  const emptyCartState: CartContextType = {
-    cartItems: [],
-    isLoading: authLoading, // Show loading during auth check
-    error: null,
-    totalItems: 0,
-    totalPrice: 0,
-    addToCart: async () => {
-      throw new Error('Cart functionality is only available for buyers');
-    },
-    updateCartItem: async () => {
-      throw new Error('Cart functionality is only available for buyers');
-    },
-    removeCartItem: async () => {
-      throw new Error('Cart functionality is only available for buyers');
-    },
-    clearCart: async () => {
-      throw new Error('Cart functionality is only available for buyers');
-    },
-    isAddingToCart: false,
-    isUpdatingCart: false,
-    isRemovingFromCart: false,
-    isClearingCart: false,
-  };
-
-  const contextValue = shouldProvideCart ? cartData : emptyCartState;
-
   return (
-    <CartContext.Provider value={contextValue}>
+    <CartContext.Provider value={cartData}>
       {children}
     </CartContext.Provider>
   );

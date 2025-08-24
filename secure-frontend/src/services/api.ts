@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import { getCachedUserRole } from '../utils/roleUtils';
 import { Product, CartItem, User, Order, OrderWithDetails } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -29,13 +30,53 @@ api.interceptors.response.use(
   }
 );
 
+// Helper function to get current user role from cache
+const getCurrentUserRole = async (): Promise<string | null> => {
+  try {
+    // Get current user first
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return null;
+    
+    // Get cached role
+    return getCachedUserRole(userData.user.id);
+  } catch {
+    return null;
+  }
+};
+
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {
+    const userRole = await getCurrentUserRole();
+    
+    // For sellers, use backend API to get role-filtered products
+    if (userRole === 'seller') {
+      try {
+        const response = await api.get('/api/products');
+        
+        // Transform backend data to match frontend Product interface
+        const products: Product[] = (response.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+          sellerId: item.seller_id,
+          createdAt: item.created_at,
+        }));
+        
+        return products;
+      } catch (error) {
+        console.error('Error fetching seller products from backend:', error);
+        throw error;
+      }
+    }
+    
+    // For buyers and other roles, use direct Supabase for better performance
     try {
-      // Fetch products from Supabase database
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('status', 'published') // Only published products for buyers
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -62,11 +103,44 @@ export const ProductService = {
   },
 
   getPaginated: async (limit: number, offset: number): Promise<{ products: Product[]; totalCount: number }> => {
+    const userRole = await getCurrentUserRole();
+    
+    // For sellers, use backend API to get role-filtered products
+    if (userRole === 'seller') {
+      try {
+        const response = await api.get('/api/products');
+        
+        // Transform backend data to match frontend Product interface
+        const allProducts: Product[] = (response.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+          sellerId: item.seller_id,
+          createdAt: item.created_at,
+        }));
+        
+        // Apply pagination
+        const products = allProducts.slice(offset, offset + limit);
+        
+        return {
+          products,
+          totalCount: allProducts.length,
+        };
+      } catch (error) {
+        console.error('Error fetching paginated seller products from backend:', error);
+        throw error;
+      }
+    }
+    
+    // For buyers, use direct Supabase with pagination for better performance
     try {
       // First, get the total count
       const { count, error: countError } = await supabase
         .from('products')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'published'); // Only published products for buyers
 
       if (countError) {
         console.error('Supabase error counting products:', countError);
@@ -77,6 +151,7 @@ export const ProductService = {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('status', 'published') // Only published products for buyers
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -108,66 +183,47 @@ export const ProductService = {
 
   getById: async (id: string): Promise<Product> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to fetch product: ${error.message}`);
-      }
-
-      if (!data) {
-        throw new Error('Product not found');
-      }
-
+      const response = await api.get(`/api/products/${id}`);
+      
+      // Transform backend data to match frontend Product interface
+      const item = response.data;
       return {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.image_url || data.image || 'https://via.placeholder.com/400x400?text=No+Image',
-        sellerId: data.seller_id || data.sellerId || '',
-        createdAt: data.created_at || data.createdAt || new Date().toISOString(),
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
       };
     } catch (error) {
-      console.error('Error fetching product by ID:', error);
+      console.error('Error fetching product by ID from backend:', error);
       throw error;
     }
   },
 
   create: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        throw new Error('User not authenticated');
-      }
-
-      const { data, error } = await supabase
-        .from('products')
-        .insert([{
-          name: productData.name,
-          description: productData.description,
-          price: productData.price,
-          image_url: productData.image,
-          seller_id: userData.user.id,
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to create product: ${error.message}`);
-      }
-
+      // Transform frontend data to backend format
+      const backendData = {
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        image: productData.image,
+      };
+      
+      const response = await api.post('/api/products', backendData);
+      
+      // Transform backend response to frontend format
+      const item = response.data;
       return {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
-        sellerId: data.seller_id,
-        createdAt: data.created_at,
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
       };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -177,31 +233,25 @@ export const ProductService = {
 
   update: async (id: string, updates: Partial<Product>): Promise<Product> => {
     try {
-      const updateData: any = {};
-      if (updates.name) updateData.name = updates.name;
-      if (updates.description) updateData.description = updates.description;
-      if (updates.price) updateData.price = updates.price;
-      if (updates.image) updateData.image_url = updates.image;
+      // Transform frontend data to backend format
+      const backendData: any = {};
+      if (updates.name) backendData.name = updates.name;
+      if (updates.description) backendData.description = updates.description;
+      if (updates.price) backendData.price = updates.price;
+      if (updates.image) backendData.image = updates.image;
 
-      const { data, error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to update product: ${error.message}`);
-      }
-
+      const response = await api.put(`/api/products/${id}`, backendData);
+      
+      // Transform backend response to frontend format
+      const item = response.data;
       return {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        image: data.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
-        sellerId: data.seller_id,
-        createdAt: data.created_at,
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
       };
     } catch (error) {
       console.error('Error updating product:', error);
@@ -211,14 +261,7 @@ export const ProductService = {
 
   delete: async (id: string): Promise<void> => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(`Failed to delete product: ${error.message}`);
-      }
+      await api.delete(`/api/products/${id}`);
     } catch (error) {
       console.error('Error deleting product:', error);
       throw error;
@@ -494,51 +537,97 @@ export const UserService = {
 // Seller-specific product services
 export const SellerProductService = {
   // Get products for current seller only
+  // Uses backend API which automatically filters by seller role
   getSellerProducts: async (): Promise<Product[]> => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        throw new Error('User not authenticated');
-      }
-
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('seller_id', userData.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw new Error(`Failed to fetch seller products: ${error.message}`);
-      }
-
-      return (data || []).map(item => ({
+      // Call backend API which handles role-based filtering
+      const response = await api.get('/api/products');
+      
+      // Transform backend data to match frontend Product interface
+      const products: Product[] = (response.data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       }));
+      
+      return products;
     } catch (error) {
-      console.error('Error fetching seller products:', error);
+      console.error('Error fetching seller products from backend:', error);
       throw error;
     }
   },
 
   // Create product (automatically assigns to current seller)
   createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
-    return ProductService.create(productData);
+    try {
+      // Transform frontend data to backend format
+      const backendData = {
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        image: productData.image,
+      };
+      
+      const response = await api.post('/api/products', backendData);
+      
+      // Transform backend response to frontend format
+      const item = response.data;
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
+      };
+    } catch (error) {
+      console.error('Error creating product via backend:', error);
+      throw error;
+    }
   },
 
   // Update product (only if owned by current seller)
   updateProduct: async (id: string, updates: Partial<Product>): Promise<Product> => {
-    return ProductService.update(id, updates);
+    try {
+      // Transform frontend data to backend format
+      const backendData: any = {};
+      if (updates.name) backendData.name = updates.name;
+      if (updates.description) backendData.description = updates.description;
+      if (updates.price) backendData.price = updates.price;
+      if (updates.image) backendData.image = updates.image;
+
+      const response = await api.put(`/api/products/${id}`, backendData);
+      
+      // Transform backend response to frontend format
+      const item = response.data;
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        sellerId: item.seller_id,
+        createdAt: item.created_at,
+      };
+    } catch (error) {
+      console.error('Error updating product via backend:', error);
+      throw error;
+    }
   },
 
   // Delete product (only if owned by current seller)
   deleteProduct: async (id: string): Promise<void> => {
-    return ProductService.delete(id);
+    try {
+      await api.delete(`/api/products/${id}`);
+    } catch (error) {
+      console.error('Error deleting product via backend:', error);
+      throw error;
+    }
   },
 };
 
