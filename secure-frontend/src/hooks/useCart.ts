@@ -21,13 +21,13 @@ interface UseCartResult {
 
 export function useCart(): UseCartResult {
   const queryClient = useQueryClient();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isBuyer } = useAuth();
 
-  // Fetch cart items - only when user is authenticated
+  // Fetch cart items - only when user is authenticated AND is a buyer
   const { data: cartItems = [], isLoading, error } = useQuery<CartItem[], Error>({
     queryKey: ['cart'],
     queryFn: CartService.getCartItems,
-    enabled: isAuthenticated && !!user, // Only run when authenticated and user exists
+    enabled: isAuthenticated && !!user && isBuyer, // Only run for authenticated buyers
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

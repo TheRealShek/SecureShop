@@ -23,15 +23,29 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isBuyer } = useAuth();
-
-  // Only buyers get cart context; other roles get children directly (no cart queries)
-  if (!isAuthenticated || !isBuyer) {
-    return <>{children}</>;
-  }
-
+  
+  // Always call useCart hook - hooks must be called in the same order every render
   const cartData = useCart();
+
+  // Only provide cart context to buyers; other roles get a disabled context
+  const contextValue = isAuthenticated && isBuyer ? cartData : {
+    cartItems: [],
+    isLoading: false,
+    error: null,
+    totalItems: 0,
+    totalPrice: 0,
+    addToCart: async () => { throw new Error('Cart not available for this user role'); },
+    updateCartItem: async () => { throw new Error('Cart not available for this user role'); },
+    removeCartItem: async () => { throw new Error('Cart not available for this user role'); },
+    clearCart: async () => { throw new Error('Cart not available for this user role'); },
+    isAddingToCart: false,
+    isUpdatingCart: false,
+    isRemovingFromCart: false,
+    isClearingCart: false,
+  };
+
   return (
-    <CartContext.Provider value={cartData}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

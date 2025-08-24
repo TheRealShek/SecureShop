@@ -9,30 +9,36 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, isAuthenticated, loading, role } = useAuth();
+  const { login, isAuthenticated, loading, role, authReady } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only redirect if user explicitly navigated to login while already authenticated
+  // Navigation effect - only runs when auth is fully ready
   useEffect(() => {
-    console.log('🔄 LoginPage useEffect triggered:', { loading, isAuthenticated, role });
+    console.log('🔄 LoginPage useEffect triggered:', { 
+      loading, 
+      authReady, 
+      isAuthenticated, 
+      role 
+    });
     
-    if (!loading && isAuthenticated && role) {
+    // Only proceed if auth is ready and user is authenticated with a role
+    if (authReady && !loading && isAuthenticated && role) {
       const redirectPath = getRoleBasedRedirect(role);
       console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
       
       if (location.state?.from) {
-        // Only redirect if user was redirected here from a protected route
+        // User was redirected here from a protected route
         const from = location.state.from.pathname || redirectPath;
         console.log('🔙 Redirecting to previous location:', from);
         navigate(from, { replace: true });
       } else {
-        // Direct navigation to login while authenticated - redirect to role-based page
+        // Direct navigation to login while authenticated
         console.log('🏠 Redirecting to role-based home:', redirectPath);
         navigate(redirectPath, { replace: true });
       }
     }
-  }, [isAuthenticated, loading, navigate, location.state, role]);
+  }, [authReady, loading, isAuthenticated, role, navigate, location.state]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,22 +47,8 @@ export function LoginPage() {
     
     try {
       await login(email, password);
-      
-      // Wait a bit for the role to be set in AuthContext, then navigate
-      setTimeout(() => {
-        // Get the latest auth state
-        const currentAuth = JSON.parse(JSON.stringify({ isAuthenticated, role }));
-        console.log('🎯 Post-login navigation check:', currentAuth);
-        
-        if (currentAuth.isAuthenticated && currentAuth.role) {
-          const redirectPath = getRoleBasedRedirect(currentAuth.role);
-          console.log(`🚀 Navigating ${currentAuth.role} to:`, redirectPath);
-          navigate(redirectPath, { replace: true });
-        } else {
-          console.log('⏳ Role not yet loaded, waiting for useEffect to handle navigation');
-        }
-      }, 100);
-      
+      // Navigation will be handled by the useEffect above
+      // No need for setTimeout or manual navigation here
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
       console.error('Login error:', err);
@@ -66,7 +58,7 @@ export function LoginPage() {
   };
 
   // Show loading state while checking authentication
-  if (loading) {
+  if (loading || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="text-center">

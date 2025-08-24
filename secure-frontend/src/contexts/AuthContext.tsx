@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
+  authReady: boolean; // New flag to indicate auth is fully loaded
   forceLogout: () => Promise<void>;
   refreshRole: () => Promise<void>;
   isAdmin: boolean;
@@ -31,47 +32,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false); // New state
 
-  // Helper function to fetch and set user role
-  const fetchAndSetRole = async (userId: string): Promise<UserRole | null> => {
-    // Try to get cached role first
-    let userRole = getCachedUserRole(userId);
-    
-    if (!userRole) {
-      // Fetch from database if not cached
-      userRole = await fetchUserRole(userId);
-      if (userRole) {
-        cacheUserRole(userId, userRole);
+  // Helper function to fetch and set user role atomically
+  const fetchAndSetUserWithRole = async (supabaseUser: any, accessToken: string): Promise<UserWithRole | null> => {
+    try {
+      // Try to get cached role first
+      let userRole = getCachedUserRole(supabaseUser.id);
+      
+      if (!userRole) {
+        // Fetch from database if not cached
+        userRole = await fetchUserRole(supabaseUser.id);
+        if (userRole) {
+          cacheUserRole(supabaseUser.id, userRole);
+        }
       }
+
+      if (userRole) {
+        const userWithRole: UserWithRole = {
+          ...supabaseUser,
+          role: userRole
+        };
+        
+        // Set everything atomically
+        setUser(userWithRole);
+        setRole(userRole);
+        setToken(accessToken);
+        localStorage.setItem('token', accessToken);
+        
+        return userWithRole;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      return null;
     }
-    
-    setRole(userRole);
-    return userRole;
+  };
+
+  // Clear all auth state atomically
+  const clearAuthState = () => {
+    setUser(null);
+    setRole(null);
+    setToken(null);
+    clearRoleCache();
+    localStorage.removeItem('token');
   };
 
   // Refresh role function
   const refreshRole = async (): Promise<void> => {
     if (user?.id) {
       clearRoleCache();
-      const newRole = await fetchAndSetRole(user.id);
-      if (newRole && user) {
-        setUser(prev => prev ? { ...prev, role: newRole } : null);
+      const newRole = await fetchUserRole(user.id);
+      if (newRole) {
+        const updatedUser = { ...user, role: newRole };
+        setUser(updatedUser);
+        setRole(newRole);
+        cacheUserRole(user.id, newRole);
       }
     }
   };
 
   // Periodic role check (optional - every 5 minutes)
   useEffect(() => {
-    const isAuthenticated = !!user;
-    if (!user?.id || !isAuthenticated) return;
+    if (!user?.id || !authReady) return;
 
     const roleCheckInterval = setInterval(async () => {
       try {
         const currentRole = await fetchUserRole(user.id);
         if (currentRole && currentRole !== role) {
           console.log('Role changed detected, updating...', { old: role, new: currentRole });
+          const updatedUser = { ...user, role: currentRole };
+          setUser(updatedUser);
           setRole(currentRole);
-          setUser(prev => prev ? { ...prev, role: currentRole } : null);
           cacheUserRole(user.id, currentRole);
         }
       } catch (error) {
@@ -80,21 +113,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5 * 60 * 1000); // Check every 5 minutes
 
     return () => clearInterval(roleCheckInterval);
-  }, [user?.id, role]);
+  }, [user?.id, role, authReady]);
 
   useEffect(() => {
     // Check if there's an active session on app start
     const checkSession = async () => {
       try {
+        setLoading(true);
+        setAuthReady(false);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          setUser(null);
-          setRole(null);
-          setToken(null);
-          clearRoleCache();
-          localStorage.removeItem('token');
+          clearAuthState();
         } else if (session) {
           // Verify the session is still valid by making a test request
           try {
@@ -102,81 +134,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userError || !userData) {
               // Session is invalid, clear it
               await supabase.auth.signOut();
-              setUser(null);
-              setRole(null);
-              setToken(null);
-              clearRoleCache();
-              localStorage.removeItem('token');
+              clearAuthState();
             } else {
-              // Session is valid, set user and fetch role
-              const userWithRole: UserWithRole = {
-                ...session.user,
-                role: undefined // Will be set after fetching
-              };
-              setUser(userWithRole);
-              setToken(session.access_token);
-              localStorage.setItem('token', session.access_token);
-              
-              // Fetch and set role
-              const fetchedRole = await fetchAndSetRole(session.user.id);
-              if (fetchedRole) {
-                setUser(prev => prev ? { ...prev, role: fetchedRole } : null);
-              }
+              // Session is valid, fetch user with role atomically
+              await fetchAndSetUserWithRole(session.user, session.access_token);
             }
           } catch (verifyError) {
             console.error('Session verification failed:', verifyError);
             await supabase.auth.signOut();
-            setUser(null);
-            setRole(null);
-            setToken(null);
-            clearRoleCache();
-            localStorage.removeItem('token');
+            clearAuthState();
           }
         } else {
-          setUser(null);
-          setRole(null);
-          setToken(null);
-          clearRoleCache();
-          localStorage.removeItem('token');
+          clearAuthState();
         }
       } catch (error) {
         console.error('Session check failed:', error);
-        setUser(null);
-        setRole(null);
-        setToken(null);
-        clearRoleCache();
-        localStorage.removeItem('token');
+        clearAuthState();
       } finally {
         setLoading(false);
+        setAuthReady(true);
       }
     };
 
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const userWithRole: UserWithRole = {
-          ...session.user,
-          role: undefined
-        };
-        setUser(userWithRole);
-        setToken(session.access_token);
-        localStorage.setItem('token', session.access_token);
-        
-        // Fetch and set role
-        const fetchedRole = await fetchAndSetRole(session.user.id);
-        if (fetchedRole) {
-          setUser(prev => prev ? { ...prev, role: fetchedRole } : null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, !!session);
+      
+      setLoading(true);
+      setAuthReady(false);
+      
+      try {
+        if (session?.user) {
+          await fetchAndSetUserWithRole(session.user, session.access_token);
+        } else {
+          clearAuthState();
         }
-      } else {
-        setUser(null);
-        setRole(null);
-        setToken(null);
-        clearRoleCache();
-        localStorage.removeItem('token');
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        clearAuthState();
+      } finally {
+        setLoading(false);
+        setAuthReady(true);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -187,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      setAuthReady(false);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -198,31 +200,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (data.session) {
-        const userWithRole: UserWithRole = {
-          ...data.session.user,
-          role: undefined
-        };
-        setUser(userWithRole);
-        setToken(data.session.access_token);
-        localStorage.setItem('token', data.session.access_token);
-        
-        // Fetch and set role after successful login
-        const fetchedRole = await fetchAndSetRole(data.session.user.id);
-        if (fetchedRole) {
-          setUser(prev => prev ? { ...prev, role: fetchedRole } : null);
-        }
+        // Fetch user with role atomically
+        await fetchAndSetUserWithRole(data.session.user, data.session.access_token);
       }
       
     } catch (error) {
       console.error('Error logging in:', error);
-      setUser(null);
-      setRole(null);
-      setToken(null);
-      clearRoleCache();
-      localStorage.removeItem('token');
+      clearAuthState();
       throw error;
     } finally {
       setLoading(false);
+      setAuthReady(true);
     }
   };
 
@@ -295,13 +283,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider 
       value={{ 
-        isAuthenticated: !!user, 
+        isAuthenticated: !!user && !!role, // Only true when both user and role are loaded
         user,
         role,
         token,
         login, 
         logout,
         loading,
+        authReady,
         forceLogout,
         refreshRole,
         isAdmin,

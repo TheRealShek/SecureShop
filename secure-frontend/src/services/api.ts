@@ -5,6 +5,9 @@ import { Product, CartItem, User, Order, OrderWithDetails } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Fallback image URL that works reliably
+const FALLBACK_IMAGE_URL = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTQwSDIyNVYxNzBIMTc1VjE0MFpNMTUwIDEwMEgzMDBDMzEzLjgwNyAxMDAgMzI1IDExMS4xOTMgMzI1IDEyNVYyNzVDMzI1IDI4OC44MDcgMzEzLjgwNyAzMDAgMzAwIDMwMEgxMDBDODYuMTkzIDMwMCA3NSAyODguODA3IDc1IDI3NVYxMjVDNzUgMTExLjE5MyA4Ni4xOTMgMTAwIDEwMCAxMDBIMTUwWk0xMDAgMTI1VjI3NUgzMDBWMTI1SDEwMFpNMTI1IDE3MkwxNzUgMjI1TDIyNSAxNzVMMjc1IDIyNVYyNTBIMTI1VjE3MloiIGZpbGw9IiM5Q0E0QUYiLz4KPC9zdmc+';
+
 const api = axios.create({
   baseURL: API_URL,
 });
@@ -59,7 +62,7 @@ export const ProductService = {
           name: item.name,
           description: item.description,
           price: item.price,
-          image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+          image: item.image || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
           createdAt: item.created_at,
         }));
@@ -76,7 +79,6 @@ export const ProductService = {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('status', 'published') // Only published products for buyers
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -90,7 +92,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image_url || item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
       }));
@@ -116,7 +118,7 @@ export const ProductService = {
           name: item.name,
           description: item.description,
           price: item.price,
-          image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+          image: item.image || 'FALLBACK_IMAGE_URL',
           sellerId: item.seller_id,
           createdAt: item.created_at,
         }));
@@ -139,8 +141,7 @@ export const ProductService = {
       // First, get the total count
       const { count, error: countError } = await supabase
         .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published'); // Only published products for buyers
+        .select('*', { count: 'exact', head: true });
 
       if (countError) {
         console.error('Supabase error counting products:', countError);
@@ -151,7 +152,6 @@ export const ProductService = {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('status', 'published') // Only published products for buyers
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -166,7 +166,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image_url || item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image_url || item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id || item.sellerId || '',
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
       }));
@@ -192,7 +192,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -221,7 +221,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -249,7 +249,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -319,7 +319,7 @@ export const CartService = {
           name: item.products.name,
           description: item.products.description,
           price: item.products.price,
-          image: item.products.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+          image: item.products.image_url || 'FALLBACK_IMAGE_URL',
           sellerId: item.products.seller_id,
           createdAt: item.products.created_at,
         }
@@ -397,7 +397,7 @@ export const CartService = {
             name: (data.products as any).name,
             description: (data.products as any).description,
             price: (data.products as any).price,
-            image: (data.products as any).image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+            image: (data.products as any).image_url || 'FALLBACK_IMAGE_URL',
             sellerId: (data.products as any).seller_id,
             createdAt: (data.products as any).created_at,
           }
@@ -463,7 +463,7 @@ export const CartService = {
           name: (data.products as any).name,
           description: (data.products as any).description,
           price: (data.products as any).price,
-          image: (data.products as any).image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+          image: (data.products as any).image_url || 'FALLBACK_IMAGE_URL',
           sellerId: (data.products as any).seller_id,
           createdAt: (data.products as any).created_at,
         }
@@ -542,18 +542,18 @@ export const SellerProductService = {
     try {
       // Call backend API which handles role-based filtering
       const response = await api.get('/api/products');
-      
-      // Transform backend data to match frontend Product interface
-      const products: Product[] = (response.data || []).map((item: any) => ({
+      // Support both array and { products: [] } formats
+      const raw = response.data;
+      const arr = Array.isArray(raw) ? raw : (raw.products || []);
+      const products: Product[] = arr.map((item: any) => ({
         id: item.id,
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       }));
-      
       return products;
     } catch (error) {
       console.error('Error fetching seller products from backend:', error);
@@ -581,7 +581,7 @@ export const SellerProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -610,7 +610,7 @@ export const SellerProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
-        image: item.image || 'https://via.placeholder.com/400x400?text=No+Image',
+        image: item.image || 'FALLBACK_IMAGE_URL',
         sellerId: item.seller_id,
         createdAt: item.created_at,
       };
@@ -641,76 +641,110 @@ export const OrderService = {
         throw new Error('User not authenticated');
       }
 
-      // Query from order_items (junction table) with joins to both orders and products
-      const { data, error } = await supabase
-        .from('order_items')
-        .select(`
-          id,
-          quantity,
-          price_at_purchase,
-          order_id,
-          product_id,
-          products:product_id (
-            id,
-            name,
-            description,
-            price,
-            image_url,
-            seller_id,
-            created_at
-          ),
-          orders:order_id (
-            id,
-            user_id,
-            status,
-            total_amount,
-            created_at,
-            updated_at,
-            users:user_id (
-              id,
-              email,
-              role
-            )
-          )
-        `)
-        .eq('products.seller_id', userData.user.id)
-        .order('orders(created_at)', { ascending: false });
+      // Step 1: Get seller's product IDs
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', userData.user.id);
 
-      if (error) {
-        throw new Error(`Failed to fetch seller orders: ${error.message}`);
+      if (productsError) {
+        throw new Error(`Failed to fetch seller products: ${productsError.message}`);
       }
 
-      // Transform the data to match OrderWithDetails interface
-      return (data || []).map(item => {
-        const product = Array.isArray(item.products) ? item.products[0] : item.products;
-        const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
-        const user = Array.isArray(order.users) ? order.users[0] : order.users;
+      const productIds = productsData?.map(p => p.id) || [];
+      
+      if (productIds.length === 0) {
+        return [];
+      }
+
+      // Step 2: Get order_items for seller's products
+      const { data: orderItemsData, error: orderItemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .in('product_id', productIds);
+
+      if (orderItemsError) {
+        throw new Error(`Failed to fetch order items: ${orderItemsError.message}`);
+      }
+
+      if (!orderItemsData || orderItemsData.length === 0) {
+        return [];
+      }
+
+      const orderIds = [...new Set(orderItemsData.map(item => item.order_id))];
+
+      // Step 3: Get orders with buyer details
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          buyer_id,
+          status,
+          total_amount,
+          created_at,
+          updated_at,
+          users:buyer_id (
+            id,
+            email,
+            role
+          )
+        `)
+        .in('id', orderIds);
+
+      if (ordersError) {
+        throw new Error(`Failed to fetch orders: ${ordersError.message}`);
+      }
+
+      // Step 4: Get product details
+      const { data: productDetailsData, error: productDetailsError } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds);
+
+      if (productDetailsError) {
+        throw new Error(`Failed to fetch product details: ${productDetailsError.message}`);
+      }
+
+      // Create lookup maps
+      const ordersMap = new Map(ordersData?.map(order => [order.id, order]) || []);
+      const productsMap = new Map(productDetailsData?.map(product => [product.id, product]) || []);
+
+      // Map to OrderWithDetails format, preserving return shape
+      const orders: OrderWithDetails[] = orderItemsData.map((item: any) => {
+        const order = ordersMap.get(item.order_id);
+        const product = productsMap.get(item.product_id);
+        const user = order ? (Array.isArray(order.users) ? order.users[0] : order.users) : null;
+        
+        const mappedUser = user
+          ? { id: user.id as string, email: user.email as string, role: user.role as string }
+          : { id: (order?.buyer_id ?? '') as string, email: '', role: '' };
 
         return {
-          id: order.id,
-          user_id: order.user_id,
+          id: order?.id || item.order_id,
+          user_id: order?.buyer_id || null,
           product_id: item.product_id,
           quantity: item.quantity,
-          status: order.status,
-          total_amount: order.total_amount,
-          created_at: order.created_at,
-          updated_at: order.updated_at,
-          products: {
+          status: order?.status || 'pending',
+          total_amount: order?.total_amount || 0,
+          created_at: order?.created_at || '',
+          updated_at: order?.updated_at || '',
+          products: product ? {
             id: product.id,
             name: product.name,
             description: product.description,
             price: product.price,
-            image: product.image_url || 'https://via.placeholder.com/400x400?text=No+Image',
+            image: product.image_url || 'FALLBACK_IMAGE_URL',
             sellerId: product.seller_id,
             createdAt: product.created_at,
-          },
-          users: {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-          },
+          } : {} as any,
+          users: mappedUser,
         };
       });
+
+      // Sort by order creation date descending (most recent first)
+      orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      return orders;
     } catch (error) {
       console.error('Error fetching seller orders:', error);
       throw error;
