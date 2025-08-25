@@ -15,6 +15,7 @@ interface ProductFormData {
   description: string;
   price: number;
   image: string;
+  stock: number;
 }
 
 interface FormErrors {
@@ -22,6 +23,7 @@ interface FormErrors {
   description?: string;
   price?: string;
   image?: string;
+  stock?: string;
 }
 
 export function EditProductModal({ 
@@ -36,6 +38,7 @@ export function EditProductModal({
     description: '',
     price: 0,
     image: '',
+    stock: 0,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -48,6 +51,7 @@ export function EditProductModal({
         description: product.description,
         price: product.price,
         image: product.image,
+        stock: product.stock || 0,
       });
       setErrors({});
     }
@@ -67,6 +71,9 @@ export function EditProductModal({
     }
     if (!formData.image.trim()) {
       newErrors.image = 'Product image URL is required';
+    }
+    if (formData.stock < 0) {
+      newErrors.stock = 'Stock cannot be negative';
     }
 
     setErrors(newErrors);
@@ -150,7 +157,7 @@ export function EditProductModal({
           {/* Product Price */}
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price ($) *
+              Price (₹) *
             </label>
             <input
               type="number"
@@ -165,6 +172,25 @@ export function EditProductModal({
               placeholder="0.00"
             />
             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+          </div>
+
+          {/* Stock */}
+          <div>
+            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+              Stock Quantity *
+            </label>
+            <input
+              type="number"
+              id="stock"
+              min="0"
+              value={formData.stock || ''}
+              onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                errors.stock ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="0"
+            />
+            {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
           </div>
 
           {/* Product Image URL */}

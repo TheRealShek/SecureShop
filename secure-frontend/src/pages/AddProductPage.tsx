@@ -7,6 +7,7 @@ interface ProductFormData {
   name: string;
   description: string;
   price: number;
+  stock: number;
   image: string;
 }
 
@@ -14,6 +15,7 @@ interface FormErrors {
   name?: string;
   description?: string;
   price?: string;
+  stock?: string;
   image?: string;
 }
 
@@ -25,6 +27,7 @@ export function AddProductPage() {
     name: '',
     description: '',
     price: 0,
+    stock: 10, // Default stock value
     image: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -53,6 +56,11 @@ export function AddProductPage() {
     }
     if (formData.price <= 0) {
       newErrors.price = 'Price must be greater than 0';
+    }
+    if (formData.stock < 0) {
+      newErrors.stock = 'Stock cannot be negative';
+    } else if (formData.stock > 999999) {
+      newErrors.stock = 'Stock cannot exceed 999,999 units';
     }
     // Image URL is now optional, but if provided, it should be valid
     if (formData.image.trim() && formData.image.trim() !== '') {
@@ -131,7 +139,7 @@ export function AddProductPage() {
           {/* Product Price */}
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price ($) *
+              Price (₹) *
             </label>
             <input
               type="number"
@@ -146,6 +154,29 @@ export function AddProductPage() {
               placeholder="0.00"
             />
             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+          </div>
+
+          {/* Product Stock */}
+          <div>
+            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+              Stock Quantity *
+            </label>
+            <input
+              type="number"
+              id="stock"
+              min="0"
+              step="1"
+              value={formData.stock || ''}
+              onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                errors.stock ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="Enter stock quantity"
+            />
+            {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+            <p className="mt-1 text-sm text-gray-500">
+              Number of units available for sale
+            </p>
           </div>
 
           {/* Product Image URL */}

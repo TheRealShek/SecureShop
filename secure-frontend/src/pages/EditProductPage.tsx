@@ -8,6 +8,7 @@ interface ProductFormData {
   name: string;
   description: string;
   price: number;
+  stock: number;
   image: string;
 }
 
@@ -15,6 +16,7 @@ interface FormErrors {
   name?: string;
   description?: string;
   price?: string;
+  stock?: string;
   image?: string;
 }
 
@@ -27,6 +29,7 @@ export function EditProductPage() {
     name: '',
     description: '',
     price: 0,
+    stock: 0,
     image: '', // Empty string is fine for optional image
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -71,6 +74,7 @@ export function EditProductPage() {
         name: productData.name,
         description: productData.description || '',
         price: Number(productData.price),
+        stock: Number(productData.stock) || 0,
         image: productData.image_url || '',
         sellerId: productData.seller_id,
         createdAt: productData.created_at,
@@ -87,6 +91,7 @@ export function EditProductPage() {
         name: product.name || '',
         description: product.description || '',
         price: product.price || 0,
+        stock: product.stock || 0,
         image: product.image || '',
       };
       console.log('📝 [DEBUG] Setting form data to:', newFormData);
@@ -137,7 +142,13 @@ export function EditProductPage() {
     if (formData.price <= 0) {
       newErrors.price = 'Price must be greater than 0';
     } else if (formData.price > 999999) {
-      newErrors.price = 'Price cannot exceed $999,999';
+      newErrors.price = 'Price cannot exceed ₹999,999';
+    }
+    
+    if (formData.stock < 0) {
+      newErrors.stock = 'Stock cannot be negative';
+    } else if (formData.stock > 999999) {
+      newErrors.stock = 'Stock cannot exceed 999,999 units';
     }
     
     // Image URL is now optional, but if provided, it should be valid
@@ -314,7 +325,7 @@ export function EditProductPage() {
           {/* Product Price */}
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price ($) *
+              Price (₹) *
             </label>
             <input
               type="number"
@@ -329,6 +340,29 @@ export function EditProductPage() {
               placeholder="0.00"
             />
             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+          </div>
+
+          {/* Product Stock */}
+          <div>
+            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+              Stock Quantity *
+            </label>
+            <input
+              type="number"
+              id="stock"
+              min="0"
+              step="1"
+              value={formData.stock || product?.stock || ''}
+              onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                errors.stock ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="Enter stock quantity"
+            />
+            {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
+            <p className="mt-1 text-sm text-gray-500">
+              Number of units available for sale
+            </p>
           </div>
 
           {/* Product Image URL */}

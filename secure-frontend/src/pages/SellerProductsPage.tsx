@@ -145,7 +145,12 @@ export function SellerProductsPage() {
                   {product.description}
                 </p>
                 <p className="mt-2 text-lg font-semibold text-gray-900">
-                  ${product.price.toFixed(2)}
+                  ₹{product.price.toFixed(2)}
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  Stock: <span className={`font-medium ${(product.stock || 0) === 0 ? 'text-red-600' : (product.stock || 0) <= 10 ? 'text-yellow-600' : 'text-green-600'}`}>
+                    {product.stock || 0} units
+                  </span>
                 </p>
                 
                 <div className="mt-4 flex space-x-2">

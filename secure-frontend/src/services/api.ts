@@ -680,6 +680,7 @@ export const SellerProductService = {
           name: item.name,
           description: item.description || '',
           price: Number(item.price),
+          stock: Number(item.stock) || 0,
           image: item.image_url || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
           createdAt: item.created_at || new Date().toISOString(),
@@ -731,7 +732,7 @@ export const SellerProductService = {
           price: productData.price,
           image_url: productData.image,
           seller_id: sellerId,
-          stock: 10 // Default stock - you can make this configurable
+          stock: productData.stock || 0 // Use stock from form data
         })
         .select()
         .single();
@@ -749,6 +750,7 @@ export const SellerProductService = {
         name: insertedData.name,
         description: insertedData.description || '',
         price: Number(insertedData.price),
+        stock: Number(insertedData.stock) || 0,
         image: insertedData.image_url || FALLBACK_IMAGE_URL,
         sellerId: insertedData.seller_id,
         createdAt: insertedData.created_at,
@@ -783,6 +785,7 @@ export const SellerProductService = {
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.price !== undefined) updateData.price = updates.price;
+      if (updates.stock !== undefined) updateData.stock = updates.stock;
       if (updates.image !== undefined) updateData.image_url = updates.image;
       
       console.log('🔄 [DEBUG] Supabase update data:', updateData);
@@ -837,6 +840,7 @@ export const SellerProductService = {
         name: productData.name,
         description: productData.description || '',
         price: Number(productData.price),
+        stock: Number(productData.stock) || 0,
         image: productData.image_url || FALLBACK_IMAGE_URL,
         sellerId: productData.seller_id,
         createdAt: productData.created_at,
