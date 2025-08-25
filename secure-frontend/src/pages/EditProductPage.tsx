@@ -107,7 +107,7 @@ export function EditProductPage() {
       setSubmitError('');
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['seller-products'] });
-      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      queryClient.invalidateQueries({ queryKey: ['seller-product', id] });
       queryClient.invalidateQueries({ queryKey: ['products'] }); // Also invalidate general products for buyers
       navigate('/seller/products', { 
         state: { message: 'Product updated successfully!', type: 'success' }
@@ -161,9 +161,16 @@ export function EditProductPage() {
       console.log('🚀 [DEBUG] Submitting product update via Supabase:', {
         productId: id,
         formData,
-        sellerAction: 'update'
+        sellerAction: 'update',
+        hasProductLoaded: !!product
       });
       updateProductMutation.mutate({ id, data: formData });
+    } else {
+      console.log('❌ [DEBUG] Form validation failed or no product ID:', {
+        hasId: !!id,
+        formData,
+        errors
+      });
     }
   };
 

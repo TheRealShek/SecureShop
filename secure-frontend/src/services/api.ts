@@ -771,10 +771,12 @@ export const SellerProductService = {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
       if (userError || !userData.user) {
+        console.error('❌ [DEBUG] User authentication failed:', userError);
         throw new Error('User not authenticated');
       }
       
       const sellerId = userData.user.id;
+      console.log('🔍 [DEBUG] Updating product for seller:', sellerId);
       
       // Prepare update data - map frontend fields to database fields
       const updateData: any = {};
@@ -785,35 +787,59 @@ export const SellerProductService = {
       
       console.log('🔄 [DEBUG] Supabase update data:', updateData);
       
-      // Update the product, but only if it belongs to the current seller
+      // First, check if the product exists and belongs to the seller
+      const { data: existingProduct, error: checkError } = await supabase
+        .from('products')
+        .select('id, seller_id')
+        .eq('id', id)
+        .single();
+      
+      if (checkError || !existingProduct) {
+        console.error('❌ [DEBUG] Product not found:', { id, error: checkError });
+        throw new Error('Product not found');
+      }
+      
+      if (existingProduct.seller_id !== sellerId) {
+        console.error('❌ [DEBUG] Permission denied - product belongs to different seller:', {
+          productId: id,
+          productSellerId: existingProduct.seller_id,
+          currentSellerId: sellerId
+        });
+        throw new Error('You do not have permission to update this product');
+      }
+      
+      // Update the product
       const { data: updatedData, error: updateError } = await supabase
         .from('products')
         .update(updateData)
         .eq('id', id)
         .eq('seller_id', sellerId) // Security: only update if seller owns the product
-        .select()
-        .single();
+        .select();
       
       if (updateError) {
         console.error('❌ [DEBUG] Supabase update error:', updateError);
         throw new Error(`Failed to update product: ${updateError.message}`);
       }
       
-      if (!updatedData) {
+      // Check if any rows were updated
+      if (!updatedData || updatedData.length === 0) {
+        console.error('❌ [DEBUG] No rows updated - unexpected condition');
         throw new Error('Product not found or you do not have permission to update it');
       }
       
-      console.log('✅ [DEBUG] Product updated in Supabase:', updatedData);
+      // Get the first (and should be only) updated record
+      const productData = updatedData[0];
+      console.log('✅ [DEBUG] Product updated in Supabase:', productData);
       
       // Transform response to match frontend Product interface
       const product: Product = {
-        id: updatedData.id,
-        name: updatedData.name,
-        description: updatedData.description || '',
-        price: Number(updatedData.price),
-        image: updatedData.image_url || FALLBACK_IMAGE_URL,
-        sellerId: updatedData.seller_id,
-        createdAt: updatedData.created_at,
+        id: productData.id,
+        name: productData.name,
+        description: productData.description || '',
+        price: Number(productData.price),
+        image: productData.image_url || FALLBACK_IMAGE_URL,
+        sellerId: productData.seller_id,
+        createdAt: productData.created_at,
       };
       
       return product;
