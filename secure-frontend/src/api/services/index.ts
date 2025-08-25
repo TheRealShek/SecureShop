@@ -12,6 +12,7 @@ export { UserService } from './user.service';
 export { SellerService } from './seller.service';
 export { OrderService } from './order.service';
 export { BuyerService } from './buyer.service';
+export { CheckoutService } from './checkout.service';
 
 // Legacy exports for backward compatibility
 export { SellerService as SellerProductService } from './seller.service';

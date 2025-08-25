@@ -8,3 +8,4 @@ export { RootRedirect } from './RootRedirect';
 export { Cart } from './cart';
 export { CartErrorBoundary } from './CartErrorBoundary';
 export { ProductSort } from './ProductSort';
+export { default as CheckoutButton } from './CheckoutButton';

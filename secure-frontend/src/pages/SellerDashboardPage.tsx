@@ -459,7 +459,7 @@ export function SellerDashboardPage() {
                     to="/seller/products/add"
                     className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
                   >
-                    Add Your First Product
+                    Add Your Product
                   </Link>
                 </div>
               ) : (
