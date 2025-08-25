@@ -6,7 +6,9 @@ import { Banner } from '../components/Banner';
 import { ProductFilters } from '../components/ProductFilters';
 import { ProductGrid } from '../components/ProductGrid';
 import { ProductSort } from '../components/ProductSort';
+import { QuickViewModal } from '../components/QuickViewModal';
 import { SortOption } from '../hooks/useSortedProducts';
+import { Product } from '../types';
 import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -22,6 +24,7 @@ export function DashboardPage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest-first');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cartItems, setCartItems] = useState<Set<string>>(new Set());
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   // Check authentication on mount
   useEffect(() => {
@@ -239,6 +242,7 @@ export function DashboardPage() {
           onToggleFavorite={handleToggleFavorite}
           favorites={favorites}
           maxProducts={25}
+          onQuickView={setQuickViewProduct}
           emptyMessage={
             searchTerm 
               ? `No products found matching "${searchTerm}". Try a different search term.`
@@ -248,6 +252,14 @@ export function DashboardPage() {
           }
         />
       </main>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={handleAddToCart}
+      />
     </div>
   );
 }

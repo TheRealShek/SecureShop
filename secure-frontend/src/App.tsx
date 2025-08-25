@@ -10,6 +10,8 @@ import { LoginPage } from './pages/LoginPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailsPage } from './pages/ProductDetailsPage';
 import { CartPage } from './pages/CartPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ManageProductsPage } from './pages/ManageProductsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -131,6 +133,26 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['buyer', 'admin']}>
                     <CartPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Orders - only buyers and admin */}
+              <Route 
+                path="/orders" 
+                element={
+                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                    <OrdersPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Order Details - only buyers and admin */}
+              <Route 
+                path="/orders/:orderId" 
+                element={
+                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                    <OrderDetailsPage />
                   </ProtectedRoute>
                 } 
               />

@@ -19,7 +19,7 @@ export * from './config';
 export { api } from './config/axios';
 
 // Legacy imports support - these maintain the exact same interface
-import { ProductService, CartService, UserService, SellerService, OrderService } from './services';
+import { ProductService, CartService, UserService, SellerService, OrderService, BuyerService } from './services';
 
 // Named exports for the services (maintains existing import patterns)
 export {
@@ -28,6 +28,7 @@ export {
   UserService,
   SellerService,
   OrderService,
+  BuyerService,
   // Legacy alias
   SellerService as SellerProductService
 };

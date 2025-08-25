@@ -31,7 +31,7 @@ export function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickV
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-75" />
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-md" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -85,7 +85,6 @@ export function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickV
                             ))}
                           </div>
                           <span className="text-sm text-gray-600">({rating}.0)</span>
-                          <span className="text-sm text-gray-500">• 127 reviews</span>
                         </div>
 
                         {/* Price */}
@@ -129,9 +128,6 @@ export function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickV
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                             In Stock
                           </span>
-                          <span className="text-sm text-gray-500">
-                            Free shipping on orders over ₹500
-                          </span>
                         </div>
 
                         <button
@@ -144,10 +140,6 @@ export function QuickViewModal({ product, isOpen, onClose, onAddToCart }: QuickV
                           <ShoppingCartIcon className="h-6 w-6" />
                           <span>Add to Cart</span>
                         </button>
-
-                        <p className="text-center text-sm text-gray-500 mt-3">
-                          30-day return policy • Secure checkout
-                        </p>
                       </div>
                     </div>
                   </div>

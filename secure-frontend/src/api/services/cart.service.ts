@@ -36,7 +36,7 @@ const getCartItems = async (): Promise<CartItem[]> => {
         product_id,
         quantity,
         created_at,
-        products (
+        products!cart_items_product_id_fkey (
           id,
           name,
           description,
@@ -111,7 +111,7 @@ const addToCart = async (productId: string): Promise<CartItem> => {
           product_id,
           quantity,
           created_at,
-          products (
+          products!cart_items_product_id_fkey (
             id,
             name,
             description,
@@ -171,7 +171,7 @@ const updateCartItem = async (productId: string, quantity: number): Promise<Cart
         product_id,
         quantity,
         created_at,
-        products (
+        products!cart_items_product_id_fkey (
           id,
           name,
           description,

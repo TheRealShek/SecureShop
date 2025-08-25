@@ -51,6 +51,23 @@ export interface Order {
   updated_at: string;
 }
 
+// Order item interface for detailed order breakdown
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  created_at: string;
+  product: Product & {
+    seller?: {
+      id: string;
+      email: string;
+    };
+  };
+}
+
 // Extended order with product and user details
 export interface OrderWithDetails extends Order {
   products: Product;
@@ -59,4 +76,6 @@ export interface OrderWithDetails extends Order {
     email: string;
     role: string;
   };
+  orderItems?: OrderItem[];
+  shipping_address?: string;
 }

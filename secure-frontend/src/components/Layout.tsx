@@ -26,13 +26,19 @@ export function Layout() {
     ];
 
     if (isAuthenticated && role) {
-      // Add role-specific navigation items
-      if (role === 'buyer' || role === 'admin') {
-        baseNav.push({ name: 'Cart', href: '/cart' });
+      // For buyers, add Orders
+      if (role === 'buyer') {
+        baseNav.push({ name: 'Orders', href: '/orders' });
+        return baseNav;
       }
       
+      // For other roles, add their specific navigation items
       if (role === 'admin') {
-        baseNav.push({ name: 'Dashboard', href: '/dashboard' });
+        baseNav.push(
+          { name: 'Cart', href: '/cart' },
+          { name: 'Orders', href: '/orders' },
+          { name: 'Dashboard', href: '/dashboard' }
+        );
       }
       
       if (role === 'seller' || role === 'admin') {
@@ -68,16 +74,16 @@ export function Layout() {
               <div className="flex h-16 justify-between">
                 <div className="flex">
                   <div className="flex flex-shrink-0 items-center">
-                    <Link to="/" className="text-xl font-bold text-indigo-600">
+                    <Link to="/" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200">
                       SecureShop
                     </Link>
                   </div>
-                  <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
                     {navigation.map((item) => (
                       <Link
                         key={item.name}
                         to={item.href}
-                        className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200"
                       >
                         {item.name}
                       </Link>
@@ -99,24 +105,31 @@ export function Layout() {
                     )}
                   </Disclosure.Button>
                 </div>
-                <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
                   {isAuthenticated ? (
                     <>
-                      <Link
-                        to="/cart"
-                        className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none"
-                      >
-                        <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
-                        {totalItems > 0 && (
-                          <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-medium text-white">
-                            {totalItems > 99 ? '99+' : totalItems}
-                          </span>
-                        )}
-                      </Link>
+                      {/* Cart - Only show for buyers and admins */}
+                      {(role === 'buyer' || role === 'admin') && (
+                        <Link
+                          to="/cart"
+                          className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                        >
+                          <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
+                          {totalItems > 0 && (
+                            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gray-900 flex items-center justify-center text-xs font-medium text-white">
+                              {totalItems > 99 ? '99+' : totalItems}
+                            </span>
+                          )}
+                        </Link>
+                      )}
 
-                      <Menu as="div" className="relative ml-3">
-                        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none">
-                          <UserCircleIcon className="h-8 w-8 text-gray-400" aria-hidden="true" />
+                      {/* User Menu */}
+                      <Menu as="div" className="relative">
+                        <Menu.Button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                          <UserCircleIcon className="h-6 w-6 text-gray-600" aria-hidden="true" />
+                          <span className="text-sm font-medium text-gray-700 hidden md:block">
+                            {user?.email?.split('@')[0]}
+                          </span>
                         </Menu.Button>
                         <Transition
                           as={Fragment}
@@ -127,28 +140,31 @@ export function Layout() {
                           leaveFrom="transform opacity-100 scale-100"
                           leaveTo="transform opacity-0 scale-95"
                         >
-                          <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                            <Menu.Item>
-                              {({ active }) => (
-                                <Link
-                                  to="/dashboard"
-                                  className={classNames(
-                                    active ? 'bg-gray-100' : '',
-                                    'block px-4 py-2 text-sm text-gray-700'
-                                  )}
-                                >
-                                  Dashboard
-                                </Link>
-                              )}
-                            </Menu.Item>
+                          <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white py-2 shadow-lg ring-1 ring-gray-200 focus:outline-none">
+                            {/* Only show Dashboard for non-buyers */}
+                            {role !== 'buyer' && (
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <Link
+                                    to="/dashboard"
+                                    className={classNames(
+                                      active ? 'bg-gray-50' : '',
+                                      'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50'
+                                    )}
+                                  >
+                                    Dashboard
+                                  </Link>
+                                )}
+                              </Menu.Item>
+                            )}
                             <Menu.Item>
                               {({ active }) => (
                                 <button
                                   onClick={handleLogout}
                                   disabled={isLoggingOut}
                                   className={classNames(
-                                    active ? 'bg-gray-100' : '',
-                                    'block w-full px-4 py-2 text-left text-sm text-gray-700',
+                                    active ? 'bg-gray-50' : '',
+                                    'block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50',
                                     isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
                                   )}
                                 >
@@ -207,17 +223,20 @@ export function Layout() {
                     </div>
                   </div>
                   <div className="mt-3 space-y-1">
-                    <Disclosure.Button
-                      as={Link}
-                      to="/dashboard"
-                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                    >
-                      Dashboard
-                    </Disclosure.Button>
+                    {/* Only show Dashboard for non-buyers */}
+                    {role !== 'buyer' && (
+                      <Disclosure.Button
+                        as={Link}
+                        to="/dashboard"
+                        className="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg mx-2"
+                      >
+                        Dashboard
+                      </Disclosure.Button>
+                    )}
                     <Disclosure.Button
                       as="button"
                       onClick={() => logout()}
-                      className="block w-full px-4 py-2 text-left text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                      className="block w-full px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg mx-2"
                     >
                       Sign out
                     </Disclosure.Button>

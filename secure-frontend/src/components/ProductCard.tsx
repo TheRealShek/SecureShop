@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
 import { formatPrice } from '../utils/currency';
@@ -25,6 +25,7 @@ export function ProductCard({
   onEdit,
   onDelete,
   showSellerActions = false,
+  onQuickView,
 }: ProductCardProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -86,15 +87,30 @@ export function ProductCard({
         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${
           isHovered ? 'opacity-100' : 'opacity-0'
         }`}>
-          {!showSellerActions && onAddToCart && product.inStock !== false && (
-            <button
-              onClick={handleAddToCart}
-              className="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-            >
-              <ShoppingCartIcon className="h-4 w-4" />
-              Add to Cart
-            </button>
-          )}
+          <div className="flex flex-col items-center gap-3">
+            {/* Info Button - Always show for buyers */}
+            {!showSellerActions && onQuickView && (
+              <button
+                onClick={() => onQuickView(product)}
+                className="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-medium text-sm hover:bg-white hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
+                title="View product details"
+              >
+                <InformationCircleIcon className="h-4 w-4" />
+                <span>View Details</span>
+              </button>
+            )}
+            
+            {/* Add to Cart Button */}
+            {!showSellerActions && onAddToCart && product.inStock !== false && (
+              <button
+                onClick={handleAddToCart}
+                className="bg-gray-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-800 hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
+              >
+                <ShoppingCartIcon className="h-4 w-4" />
+                Add to Cart
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -250,10 +250,6 @@ export function Cart() {
               `Checkout • ${formatPrice(totalPrice)}`
             )}
           </button>
-          
-          <p className="text-xs text-gray-500 text-center">
-            * This is a demo checkout. Cart will be cleared upon checkout.
-          </p>
         </div>
       </div>
     </div>
