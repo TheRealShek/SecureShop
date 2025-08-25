@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePaginatedProducts, useSortedProducts } from '../hooks';
 import { useCart } from '../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductGrid } from '../components/ProductGrid';
 import { ProductSort } from '../components/ProductSort';
+import { QuickViewModal } from '../components/QuickViewModal';
 import { EditProductModal } from '../components/EditProductModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useAuth } from '../contexts/AuthContext';
 import { SortOption } from '../hooks/useSortedProducts';
 import { Product } from '../types';
 import { SellerProductService } from '../services/api';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export function ProductsPage() {
   const { user } = useAuth();
@@ -17,9 +19,13 @@ export function ProductsPage() {
   const queryClient = useQueryClient();
   const [sortBy, setSortBy] = useState<SortOption>('newest-first');
   
+  // Filter and search states
+  const [searchTerm, setSearchTerm] = useState('');
+  
   // Modal states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const { 
@@ -34,6 +40,21 @@ export function ProductsPage() {
   
   // Apply sorting to the products
   const sortedProducts = useSortedProducts(products, sortBy);
+
+  // Filter products based on search term only
+  const filteredProducts = useMemo(() => {
+    let filtered = sortedProducts;
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [sortedProducts, searchTerm]);
 
   // Update product mutation
   const updateProductMutation = useMutation({
@@ -149,74 +170,90 @@ export function ProductsPage() {
         </div>
       )}
 
-      <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Our Products
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Discover our amazing collection of products
+      <div className="bg-white min-h-screen">
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+          
+          {/* Simple Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Products
+            </h1>
+            <p className="text-gray-600">
+              Discover quality products from trusted sellers
             </p>
           </div>
 
-          {/* Product Controls - Sort and potentially filters */}
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center text-sm text-gray-600">
-              <span className="font-medium">
-                {Array.isArray(products) ? products.length : 0} products found
-              </span>
+          {/* Simple Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md mx-auto">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search products..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+              />
             </div>
+          </div>
+
+          {/* Simple Controls */}
+          <div className="mb-6 flex justify-between items-center">
+            <span className="text-sm text-gray-600">
+              {filteredProducts.length} products
+            </span>
             <ProductSort 
               sortBy={sortBy} 
               onSortChange={setSortBy}
-              className="flex-shrink-0"
             />
           </div>
 
-          {/* Enhanced Product Grid with 4x4 layout */}
-          <div className="bg-gray-50 rounded-2xl">
+          {/* Products Grid - Clean and Minimal */}
+          <div>
             <ProductGrid
-              products={sortedProducts}
+              products={filteredProducts}
               onAddToCart={isBuyer ? handleAddToCart : undefined}
               onEdit={handleEditProduct}
               onDelete={handleDeleteProduct}
               currentUserId={user?.id}
               userRole={user?.role}
-              onToggleFavorite={undefined} // Could be enhanced later
-              favorites={new Set()} // Could be enhanced later
-              loading={false} // We handle loading state above
-              emptyMessage="Check back later for new products"
-              // Remove maxProducts to show all loaded products
+              onToggleFavorite={undefined}
+              favorites={new Set()}
+              loading={false}
+              emptyMessage={
+                searchTerm 
+                  ? "No products found. Try different search terms."
+                  : "No products available"
+              }
+              gridColumns={4}
+              onQuickView={setQuickViewProduct}
             />
             
-            {/* Load more section */}
-            {hasMore && (
-              <div className="px-6 lg:px-8 pb-6 lg:pb-8 text-center">
-                <div className="pt-6 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-4 font-medium">
-                    {remainingCount} more products available
-                  </p>
-                  <button 
-                    onClick={loadMore}
-                    disabled={isLoadingMore}
-                    className="inline-flex items-center px-8 py-3 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                  >
-                    {isLoadingMore ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-3"></div>
-                        Loading...
-                      </>
-                    ) : (
-                      'Load More Products'
-                    )}
-                  </button>
-                </div>
+            {/* Simple Load More */}
+            {hasMore && filteredProducts.length > 0 && (
+              <div className="text-center mt-8">
+                <button 
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {isLoadingMore ? 'Loading...' : `Load More (${remainingCount} remaining)`}
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={isBuyer ? handleAddToCart : undefined}
+      />
 
       {/* Edit Product Modal */}
       <EditProductModal
