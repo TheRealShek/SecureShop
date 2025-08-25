@@ -6,7 +6,7 @@ import { supabase } from '../services/supabase';
 import { ExclamationTriangleIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 export function SellerDashboardPage() {
-  const { user, isAuthenticated, isSeller, authReady, logout } = useAuth();
+  const { user, isAuthenticated, isSeller, authReady } = useAuth();
 
   // Fetch seller's products - only when user is authenticated, is a seller, and auth is ready
   const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
@@ -78,20 +78,6 @@ export function SellerDashboardPage() {
   // Helper functions for inventory overview
   const getLowStockProducts = () => products.filter(p => (p.stock || 0) <= 10 && (p.stock || 0) > 0);
   const getOutOfStockProducts = () => products.filter(p => (p.stock || 0) === 0);
-
-  // Logout handler with confirmation
-  const handleLogout = async () => {
-    const confirmed = window.confirm('Are you sure you want to logout? You will be redirected to the login page.');
-    if (confirmed) {
-      try {
-        await logout();
-        // Navigation will be handled by the auth context/routing
-      } catch (error) {
-        console.error('Logout failed:', error);
-        alert('Logout failed. Please try again.');
-      }
-    }
-  };
 
   // Update order status function
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -176,18 +162,10 @@ export function SellerDashboardPage() {
                 Seller Dashboard
               </h1>
               <p className="mt-2 text-gray-600 text-lg">
-                Welcome back, {user?.email}! Here's an overview of your store performance.
+                Welcome back! Here's an overview of your store performance.
               </p>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 mr-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-700 font-medium">{user?.email}</span>
-              </div>
+            <div className="flex space-x-3">
               <Link
                 to="/seller/products/add"
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-200 hover:scale-105 shadow-lg"
@@ -197,15 +175,6 @@ export function SellerDashboardPage() {
                 </svg>
                 Add Product
               </Link>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transform transition-all duration-200 hover:scale-105 shadow-lg"
-              >
-                <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
             </div>
           </div>
         </div>
@@ -603,7 +572,7 @@ export function SellerDashboardPage() {
             </svg>
             Quick Actions
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
               to="/seller/products/add"
               className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-xl text-white hover:from-indigo-700 hover:to-purple-700 transform transition-all duration-200 hover:scale-105 shadow-lg"
@@ -648,19 +617,6 @@ export function SellerDashboardPage() {
                 </span>
               </div>
             </Link>
-
-            <button
-              onClick={handleLogout}
-              className="group relative overflow-hidden bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl text-white hover:from-red-600 hover:to-red-700 transform transition-all duration-200 hover:scale-105 shadow-lg"
-            >
-              <div className="flex items-center">
-                <svg className="mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span className="text-lg font-semibold">Logout</span>
-              </div>
-              <p className="mt-2 text-sm text-red-100">Sign out of your account</p>
-            </button>
           </div>
         </div>
       </div>
