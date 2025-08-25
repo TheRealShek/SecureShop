@@ -54,8 +54,13 @@ export function AddProductPage() {
     if (formData.price <= 0) {
       newErrors.price = 'Price must be greater than 0';
     }
-    if (!formData.image.trim()) {
-      newErrors.image = 'Product image URL is required';
+    // Image URL is now optional, but if provided, it should be valid
+    if (formData.image.trim() && formData.image.trim() !== '') {
+      try {
+        new URL(formData.image);
+      } catch {
+        newErrors.image = 'Please enter a valid URL';
+      }
     }
 
     setErrors(newErrors);
@@ -146,7 +151,7 @@ export function AddProductPage() {
           {/* Product Image URL */}
           <div>
             <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-              Image URL *
+              Image URL (Optional)
             </label>
             <input
               type="url"
@@ -156,9 +161,14 @@ export function AddProductPage() {
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
                 errors.image ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="https://example.com/image.jpg"
+              placeholder="https://example.com/image.jpg (optional)"
             />
             {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+            
+            {/* Help text for optional image */}
+            <p className="mt-1 text-sm text-gray-500">
+              Leave empty to use a default product image
+            </p>
             
             {/* Image Preview */}
             {formData.image && (
