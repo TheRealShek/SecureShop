@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../services/supabase';
 import { 
   fetchUserRole, 
-  cacheUserRole, 
-  getCachedUserRole, 
   clearRoleCache,
   type UserRole,
   type UserWithRole 
@@ -37,29 +35,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Helper function to fetch and set user role atomically
   const fetchAndSetUserWithRole = async (supabaseUser: any, accessToken: string): Promise<UserWithRole | null> => {
     try {
-      // Try to get cached role first
-      let userRole = getCachedUserRole(supabaseUser.id);
+      // Always fetch fresh role from database - no caching
+      console.log('🔄 Fetching fresh user role from Supabase...');
+      const userRole = await fetchUserRole(supabaseUser.id);
       
-      if (!userRole) {
-        // Fetch from database if not cached
-        userRole = await fetchUserRole(supabaseUser.id);
-        if (userRole) {
-          cacheUserRole(supabaseUser.id, userRole);
-        }
-      }
-
       if (userRole) {
         const userWithRole: UserWithRole = {
           ...supabaseUser,
           role: userRole
         };
         
-        // Set everything atomically
+        // Set everything atomically (no localStorage caching for role)
         setUser(userWithRole);
         setRole(userRole);
         setToken(accessToken);
         localStorage.setItem('token', accessToken);
         
+        console.log(`✅ User role set: ${userRole} for ${supabaseUser.email}`);
         return userWithRole;
       }
       
@@ -75,45 +67,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setRole(null);
     setToken(null);
-    clearRoleCache();
+    // Don't clear cache since we're not using it anymore
     localStorage.removeItem('token');
   };
 
-  // Refresh role function
+  // Refresh role function - always fetch fresh from database
   const refreshRole = async (): Promise<void> => {
     if (user?.id) {
-      clearRoleCache();
+      console.log('🔄 Refreshing user role from database...');
       const newRole = await fetchUserRole(user.id);
       if (newRole) {
         const updatedUser = { ...user, role: newRole };
         setUser(updatedUser);
         setRole(newRole);
-        cacheUserRole(user.id, newRole);
+        console.log(`✅ Role refreshed: ${newRole}`);
       }
     }
   };
 
-  // Periodic role check (optional - every 5 minutes)
-  useEffect(() => {
-    if (!user?.id || !authReady) return;
-
-    const roleCheckInterval = setInterval(async () => {
-      try {
-        const currentRole = await fetchUserRole(user.id);
-        if (currentRole && currentRole !== role) {
-          console.log('Role changed detected, updating...', { old: role, new: currentRole });
-          const updatedUser = { ...user, role: currentRole };
-          setUser(updatedUser);
-          setRole(currentRole);
-          cacheUserRole(user.id, currentRole);
-        }
-      } catch (error) {
-        console.error('Role check failed:', error);
-      }
-    }, 5 * 60 * 1000); // Check every 5 minutes
-
-    return () => clearInterval(roleCheckInterval);
-  }, [user?.id, role, authReady]);
+  // Remove periodic role check since we always fetch fresh data
+  // useEffect(() => {
+  //   // Removed: No longer needed since we don't cache roles
+  // }, [user?.id, role, authReady]);
 
   useEffect(() => {
     // Check if there's an active session on app start
@@ -122,20 +97,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         setAuthReady(false);
         
+        // Force clear any stale cache on app start
+        console.log('🚀 App starting, clearing any stale localStorage...');
+        localStorage.removeItem('user_role_cache');
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
           clearAuthState();
         } else if (session) {
+          console.log('📱 Found existing session, verifying validity...');
           // Verify the session is still valid by making a test request
           try {
             const { data: userData, error: userError } = await supabase.auth.getUser();
             if (userError || !userData) {
               // Session is invalid, clear it
+              console.log('❌ Session invalid, clearing...');
               await supabase.auth.signOut();
               clearAuthState();
             } else {
+              console.log('✅ Session valid, fetching user role...');
               // Session is valid, fetch user with role atomically
               await fetchAndSetUserWithRole(session.user, session.access_token);
             }
@@ -145,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             clearAuthState();
           }
         } else {
+          console.log('📭 No existing session found');
           clearAuthState();
         }
       } catch (error) {
@@ -166,7 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthReady(false);
       
       try {
-        if (session?.user) {
+        if (event === 'SIGNED_OUT') {
+          // Ensure complete cleanup on sign out
+          clearAuthState();
+        } else if (session?.user) {
           await fetchAndSetUserWithRole(session.user, session.access_token);
         } else {
           clearAuthState();
@@ -190,6 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setAuthReady(false);
       
+      // Clear any existing auth state first
+      clearAuthState();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -200,8 +189,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (data.session) {
+        console.log('🔐 Login successful, fetching user role for:', data.session.user.email);
         // Fetch user with role atomically
-        await fetchAndSetUserWithRole(data.session.user, data.session.access_token);
+        const userWithRole = await fetchAndSetUserWithRole(data.session.user, data.session.access_token);
+        console.log('👤 User role fetched after login:', userWithRole?.role);
       }
       
     } catch (error) {
@@ -218,27 +209,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Sign out from Supabase (this clears the session)
+      // Clear local state and storage FIRST to prevent any timing issues
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_role_cache'); // Clear any role cache
+      setUser(null);
+      setRole(null);
+      setToken(null);
+      
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
       }
       
-      // Clear local state and storage
-      setUser(null);
-      setRole(null);
-      setToken(null);
-      clearRoleCache();
-      localStorage.removeItem('token');
+      // Force a complete session cleanup and navigation
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          // Clear all storage
+          localStorage.clear();
+          sessionStorage.clear();
+          // Navigate to login
+          window.location.href = '/login';
+        }
+      }, 100);
       
     } catch (error) {
       console.error('Error logging out:', error);
       // Still clear local state even if Supabase call fails
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_role_cache');
       setUser(null);
       setRole(null);
       setToken(null);
-      clearRoleCache();
-      localStorage.removeItem('token');
+      
+      // Force navigation on error too
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }, 100);
     } finally {
       setLoading(false);
     }

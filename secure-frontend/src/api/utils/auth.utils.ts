@@ -1,5 +1,5 @@
 import { supabase } from '../../services/supabase';
-import { getCachedUserRole } from '../../utils/roleUtils';
+import { fetchUserRole } from '../../utils/roleUtils';
 
 /**
  * Authentication Utilities
@@ -9,7 +9,7 @@ import { getCachedUserRole } from '../../utils/roleUtils';
  */
 
 /**
- * Get the current authenticated user's role from cache
+ * Get the current authenticated user's role from database (always fresh)
  * 
  * @returns Promise<string | null> The user's role or null if not authenticated
  */
@@ -32,9 +32,9 @@ export const getCurrentUserRole = async (): Promise<string | null> => {
       return null;
     }
     
-    // Get cached role
-    const role = getCachedUserRole(userData.user.id);
-    console.log('🔍 [DEBUG] Cached role for user:', {
+    // Get fresh role from database (no caching)
+    const role = await fetchUserRole(userData.user.id);
+    console.log('🔍 [DEBUG] Fresh role for user:', {
       userId: userData.user.id,
       role: role
     });

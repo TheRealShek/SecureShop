@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
-import { getCachedUserRole } from '../utils/roleUtils';
+import { fetchUserRole } from '../utils/roleUtils';
 import { Product, CartItem, User, Order, OrderWithDetails } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -103,9 +103,9 @@ const getCurrentUserRole = async (): Promise<string | null> => {
       return null;
     }
     
-    // Get cached role
-    const role = getCachedUserRole(userData.user.id);
-    console.log('🔍 [DEBUG] Cached role for user:', {
+    // Get fresh role from database (no caching)
+    const role = await fetchUserRole(userData.user.id);
+    console.log('🔍 [DEBUG] Fresh role for user:', {
       userId: userData.user.id,
       role: role
     });

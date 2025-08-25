@@ -9,10 +9,11 @@ export interface UserWithRole extends SupabaseUser {
 
 /**
  * Fetch user role from the users table in Supabase
+ * Always fetches fresh data - no caching
  */
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
-    console.log('🔍 fetchUserRole called with userId:', userId);
+    console.log('🔍 Fetching fresh user role for userId:', userId);
     
     // First, verify we have a valid auth user
     const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -21,33 +22,35 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
       return null;
     }
     
-    console.log('✅ Auth user verified. Auth user ID:', authData.user.id);
-    console.log('🔗 Comparing IDs - Param userId:', userId, 'Auth userId:', authData.user.id);
-    console.log('📏 ID match:', userId === authData.user.id);
+    console.log('✅ Auth user verified:', {
+      authUserId: authData.user.id,
+      authUserEmail: authData.user.email,
+      paramUserId: userId,
+      idsMatch: userId === authData.user.id
+    });
 
-    // Use maybeSingle() to handle cases where user might not exist in users table
+    // Always fetch fresh data from database
     const { data, error } = await supabase
       .from('users')
-      .select('role')
+      .select('*')  // Select all columns to see the complete user record
       .eq('id', userId)
-      .maybeSingle();
+      .single(); // Use single() instead of maybeSingle() to ensure user exists
 
     console.log('🗄️ Database query completed');
-    console.log('📊 Query result data:', data);
+    console.log('📊 Full user record from database:', data);
     console.log('⚠️ Query error:', error);
 
     // Handle specific error cases
     if (error) {
       console.error('❌ Error fetching user role:', error.message, error.details);
+      
+      // If user not found in users table, this is a problem
+      if (error.code === 'PGRST116') {
+        console.error(`❌ User ${userId} (${authData.user.email}) not found in users table!`);
+        console.log('💡 User exists in auth.users but not in public.users table');
+        return null;
+      }
       return null;
-    }
-
-    // If no user found in users table, return default role
-    if (!data) {
-      console.warn(`⚠️ User ${userId} not found in users table, defaulting to buyer role`);
-      console.log('💡 Consider running this SQL query in Supabase to check:');
-      console.log(`   SELECT role FROM users WHERE id = '${userId}';`);
-      return 'buyer';
     }
 
     // Validate role value
@@ -56,13 +59,19 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
     
     console.log('🎭 Retrieved role from database:', userRole);
     console.log('✅ Role validation - Is valid:', validRoles.includes(userRole));
+    console.log('📋 Complete user data:', {
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      created_at: data.created_at
+    });
     
     if (!validRoles.includes(userRole)) {
-      console.error(`❌ Invalid role "${data.role}" for user ${userId}, defaulting to buyer`);
-      return 'buyer';
+      console.error(`❌ Invalid role "${data.role}" for user ${userId}, returning null`);
+      return null;
     }
 
-    console.log(`🎉 Successfully fetched role: ${userRole} for user ${userId}`);
+    console.log(`🎉 Successfully fetched role: ${userRole} for user ${userId} (${authData.user.email})`);
     return userRole;
   } catch (error) {
     console.error('💥 Failed to fetch user role:', error);
@@ -147,83 +156,19 @@ const safeLocalStorage = {
 };
 
 /**
- * Cache user role in localStorage with expiration
- */
-export const cacheUserRole = (userId: string, role: UserRole): void => {
-  const cacheData = {
-    role,
-    timestamp: Date.now(),
-    userId
-  };
-  safeLocalStorage.setItem('user_role_cache', JSON.stringify(cacheData));
-};
-
-/**
- * Get cached user role if still valid (1 hour cache)
- */
-export const getCachedUserRole = (userId: string): UserRole | null => {
-  console.log('💾 [DEBUG] getCachedUserRole called with userId:', userId);
-  
-  try {
-    const cached = safeLocalStorage.getItem('user_role_cache');
-    console.log('💾 [DEBUG] Raw cache data:', cached);
-    
-    if (!cached) {
-      console.log('💾 [DEBUG] No cache found');
-      return null;
-    }
-
-    const cacheData = JSON.parse(cached);
-    console.log('💾 [DEBUG] Parsed cache data:', cacheData);
-    
-    const oneHour = 60 * 60 * 1000;
-    const currentTime = Date.now();
-    const cacheAge = currentTime - cacheData.timestamp;
-    
-    console.log('💾 [DEBUG] Cache validation:', {
-      currentTime,
-      cacheTimestamp: cacheData.timestamp,
-      cacheAge,
-      oneHour,
-      isExpired: cacheAge > oneHour,
-      userIdMatch: cacheData.userId === userId,
-      requestedUserId: userId,
-      cachedUserId: cacheData.userId
-    });
-    
-    // Check if cache is expired or for different user
-    if (
-      cacheAge > oneHour ||
-      cacheData.userId !== userId
-    ) {
-      console.log('💾 [DEBUG] Cache invalid, removing:', {
-        reason: cacheAge > oneHour ? 'expired' : 'different user'
-      });
-      safeLocalStorage.removeItem('user_role_cache');
-      return null;
-    }
-
-    console.log('✅ [DEBUG] Valid cache found, returning role:', cacheData.role);
-    return cacheData.role;
-  } catch (error) {
-    console.error('❌ [DEBUG] Error reading role cache:', error);
-    safeLocalStorage.removeItem('user_role_cache');
-    return null;
-  }
-};
-
-/**
- * Clear role cache
+ * Clear role cache - kept for backward compatibility but not used
  */
 export const clearRoleCache = (): void => {
+  // Remove any legacy cache
   safeLocalStorage.removeItem('user_role_cache');
+  safeLocalStorage.removeItem('user_auth_cache');
 };
 
 /**
- * Refresh user role - force fetch from database
+ * Refresh user role - always fetch fresh from database
  */
 export const refreshUserRole = async (userId: string): Promise<UserRole | null> => {
-  clearRoleCache();
+  console.log('🔄 Refreshing user role (always fresh)...');
   return await fetchUserRole(userId);
 };
 
