@@ -2,17 +2,18 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../services/supabase';
 import { 
   fetchUserRole, 
-  clearRoleCache,
   type UserRole,
   type UserWithRole 
 } from '../utils/roleUtils';
+import { SessionManager } from '../utils/sessionManager';
+import { useTabVisibility } from '../utils/tabVisibility';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: UserWithRole | null;
   role: UserRole | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   authReady: boolean; // New flag to indicate auth is fully loaded
@@ -30,108 +31,218 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authReady, setAuthReady] = useState(false); // New state
+  const [authReady, setAuthReady] = useState(false);
+  
+  // Tab visibility tracking for optimized session handling
+  const { shouldSkipOperation } = useTabVisibility();
 
-  // Helper function to fetch and set user role atomically
-  const fetchAndSetUserWithRole = async (supabaseUser: any, accessToken: string): Promise<UserWithRole | null> => {
-    try {
-      // Always fetch fresh role from database - no caching
-      console.log('🔄 Fetching fresh user role from Supabase...');
-      const userRole = await fetchUserRole(supabaseUser.id);
-      
-      if (userRole) {
-        const userWithRole: UserWithRole = {
-          ...supabaseUser,
-          role: userRole
-        };
-        
-        // Set everything atomically (no localStorage caching for role)
-        setUser(userWithRole);
-        setRole(userRole);
-        setToken(accessToken);
-        localStorage.setItem('token', accessToken);
-        
-        console.log(`✅ User role set: ${userRole} for ${supabaseUser.email}`);
-        return userWithRole;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      return null;
-    }
-  };
-
-  // Clear all auth state atomically
+  // Atomic function to clear all auth state completely
   const clearAuthState = () => {
+    console.log('🧹 Clearing all auth state...');
     setUser(null);
     setRole(null);
     setToken(null);
-    // Don't clear cache since we're not using it anymore
-    localStorage.removeItem('token');
+    
+    // Clear session cache through SessionManager
+    SessionManager.removeSessionCache('user_data_cache');
+    SessionManager.removeSessionCache('user_role_cache');
+    console.log('✅ Auth state cleared');
   };
 
-  // Refresh role function - always fetch fresh from database
-  const refreshRole = async (): Promise<void> => {
-    if (user?.id) {
-      console.log('🔄 Refreshing user role from database...');
-      const newRole = await fetchUserRole(user.id);
-      if (newRole) {
-        const updatedUser = { ...user, role: newRole };
-        setUser(updatedUser);
-        setRole(newRole);
-        console.log(`✅ Role refreshed: ${newRole}`);
+  // Atomic function to set authenticated state with validation
+  const setAuthenticatedState = async (supabaseUser: any, accessToken: string): Promise<UserWithRole | null> => {
+    try {
+      console.log('🔄 Setting authenticated state for:', supabaseUser.email);
+      
+      // First, clear any existing state to prevent conflicts
+      clearAuthState();
+      
+      // Fetch fresh role from database
+      console.log('� Fetching user role from database...');
+      const userRole = await fetchUserRole(supabaseUser.id);
+      
+      if (!userRole) {
+        console.error('❌ No role found for user:', supabaseUser.id);
+        throw new Error('User role not found');
       }
+
+      // Create user with role
+      const userWithRole: UserWithRole = {
+        ...supabaseUser,
+        role: userRole
+      };
+
+      // Set all state atomically - this ensures token and role are always tied together
+      setUser(userWithRole);
+      setRole(userRole);
+      setToken(accessToken);
+      
+      // Cache user data and role in session storage (temporary cache)
+      SessionManager.cacheUserData(userWithRole);
+      SessionManager.cacheUserRole(supabaseUser.id, userRole);
+      
+      console.log(`✅ Authenticated state set successfully:`, {
+        userId: supabaseUser.id,
+        email: supabaseUser.email,
+        role: userRole,
+        hasToken: !!accessToken
+      });
+      
+      return userWithRole;
+      
+    } catch (error) {
+      console.error('❌ Failed to set authenticated state:', error);
+      // If anything fails, ensure state is cleared
+      clearAuthState();
+      throw error;
     }
   };
 
-  // Remove periodic role check since we always fetch fresh data
-  // useEffect(() => {
-  //   // Removed: No longer needed since we don't cache roles
-  // }, [user?.id, role, authReady]);
+  // Optimized session validation - only validate if we don't have valid local state
+  const validateSessionAndRole = async (forceValidation = false): Promise<boolean> => {
+    try {
+      // If we already have valid token, user, and role, skip validation unless forced
+      if (!forceValidation && token && user && role && user.role === role) {
+        console.log('✅ Using cached auth state, skipping validation');
+        return true;
+      }
 
+      console.log('🔍 Validating session and role...');
+      
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session?.user) {
+        console.log('❌ No valid session found');
+        return false;
+      }
+
+      // Only verify user exists if we don't have local user data
+      if (!user || user.id !== session.user.id) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) {
+          console.log('❌ User validation failed');
+          return false;
+        }
+      }
+
+      // Only fetch role if we don't have it or it's for a different user
+      if (!role || !user || user.id !== session.user.id) {
+        const userRole = await fetchUserRole(session.user.id);
+        if (!userRole) {
+          console.log('❌ Role validation failed');
+          return false;
+        }
+      }
+
+      console.log('✅ Session and role validated successfully');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Session validation error:', error);
+      return false;
+    }
+  };
+
+  // Optimized refresh role function - validates session only when needed
+  const refreshRole = async (forceRefresh = false): Promise<void> => {
+    if (!user?.id) {
+      console.log('❌ No user found for role refresh');
+      return;
+    }
+
+    try {
+      console.log('🔄 Refreshing user role...');
+      
+      // Only validate session if we don't have valid local state or it's forced
+      const isValid = await validateSessionAndRole(forceRefresh);
+      if (!isValid) {
+        console.log('❌ Session invalid during role refresh, clearing state');
+        clearAuthState();
+        return;
+      }
+
+      // Only fetch new role if forced or we suspect it might have changed
+      if (forceRefresh || !role) {
+        const newRole = await fetchUserRole(user.id);
+        if (newRole && newRole !== role) {
+          console.log(`🔄 Role changed from ${role} to ${newRole}`);
+          const updatedUser = { ...user, role: newRole };
+          setUser(updatedUser);
+          setRole(newRole);
+          console.log(`✅ Role refreshed: ${newRole}`);
+        } else if (!newRole) {
+          console.log('❌ No role found during refresh, clearing state');
+          clearAuthState();
+        } else {
+          console.log('✅ Role unchanged, no update needed');
+        }
+      } else {
+        console.log('✅ Role refresh skipped - using cached role');
+      }
+    } catch (error) {
+      console.error('❌ Role refresh failed:', error);
+      clearAuthState();
+    }
+  };
+
+  // Optimized initial session check - avoids unnecessary validations
   useEffect(() => {
-    // Check if there's an active session on app start
-    const checkSession = async () => {
+    const checkInitialSession = async () => {
       try {
         setLoading(true);
         setAuthReady(false);
         
-        // Force clear any stale cache on app start
-        console.log('🚀 App starting, clearing any stale localStorage...');
-        localStorage.removeItem('user_role_cache');
+        console.log('🚀 Checking initial session...');
         
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Check for cached user data in session storage
+        const cachedUser = SessionManager.getCachedUserData();
         
-        if (error) {
-          console.error('Error getting session:', error);
-          clearAuthState();
-        } else if (session) {
-          console.log('📱 Found existing session, verifying validity...');
-          // Verify the session is still valid by making a test request
-          try {
-            const { data: userData, error: userError } = await supabase.auth.getUser();
-            if (userError || !userData) {
-              // Session is invalid, clear it
-              console.log('❌ Session invalid, clearing...');
-              await supabase.auth.signOut();
-              clearAuthState();
-            } else {
-              console.log('✅ Session valid, fetching user role...');
-              // Session is valid, fetch user with role atomically
-              await fetchAndSetUserWithRole(session.user, session.access_token);
-            }
-          } catch (verifyError) {
-            console.error('Session verification failed:', verifyError);
-            await supabase.auth.signOut();
-            clearAuthState();
-          }
-        } else {
+        // Clear any stale cache data
+        SessionManager.clearAllSessionCache();
+        
+        const session = await SessionManager.getSupabaseSession();
+        
+        if (!session?.user) {
           console.log('📭 No existing session found');
           clearAuthState();
+        } else {
+          console.log('📱 Found existing session');
+          
+          // Check if we have valid cached data to speed up restoration
+          if (cachedUser && cachedUser.id === session.user.id) {
+            console.log('🎯 User data matches cache, attempting quick restore...');
+            try {
+              await setAuthenticatedState(session.user, session.access_token);
+              console.log('✅ Quick session restore successful');
+            } catch (quickRestoreError) {
+              console.log('⚠️ Quick restore failed, doing full validation...');
+              // Fall back to full validation
+              const isValid = await validateSessionAndRole(true);
+              if (isValid) {
+                await setAuthenticatedState(session.user, session.access_token);
+                console.log('✅ Full session validation and restore successful');
+              } else {
+                console.log('❌ Session validation failed, signing out');
+                await supabase.auth.signOut();
+                clearAuthState();
+              }
+            }
+          } else {
+            console.log('🔍 No cached data match, doing full validation...');
+            // No cached data or user mismatch - do full validation
+            const isValid = await validateSessionAndRole(true);
+            if (isValid) {
+              await setAuthenticatedState(session.user, session.access_token);
+              console.log('✅ Initial session validated and restored');
+            } else {
+              console.log('❌ Session validation failed, signing out');
+              await supabase.auth.signOut();
+              clearAuthState();
+            }
+          }
         }
       } catch (error) {
-        console.error('Session check failed:', error);
+        console.error('❌ Initial session check failed:', error);
         clearAuthState();
       } finally {
         setLoading(false);
@@ -139,26 +250,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    checkSession();
+    checkInitialSession();
 
-    // Listen for auth changes
+    // Optimized auth state change handler - prevents unnecessary reloads
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, !!session);
+      console.log('🔄 Auth state change:', event, !!session);
+      
+      // Skip operations if this was triggered by a recent tab visibility change
+      if (shouldSkipOperation(2000)) {
+        console.log('⏭️ Skipping auth change - recent tab visibility change');
+        return;
+      }
+      
+      // Don't process changes during initial load or certain background events
+      if (!authReady && event !== 'SIGNED_OUT') {
+        console.log('⏭️ Skipping auth change during initial load');
+        return;
+      }
+
+      // Skip TOKEN_REFRESHED events if we already have valid auth state
+      if (event === 'TOKEN_REFRESHED' && token && user && role && session?.access_token === token) {
+        console.log('⏭️ Skipping token refresh - state already current');
+        return;
+      }
       
       setLoading(true);
       setAuthReady(false);
       
       try {
         if (event === 'SIGNED_OUT') {
-          // Ensure complete cleanup on sign out
+          console.log('👋 User signed out');
           clearAuthState();
-        } else if (session?.user) {
-          await fetchAndSetUserWithRole(session.user, session.access_token);
-        } else {
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          console.log('👋 User signed in, setting authenticated state');
+          await setAuthenticatedState(session.user, session.access_token);
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('🔄 Token refreshed, updating auth state');
+          // For token refresh, only update if the token actually changed
+          if (session.access_token !== token) {
+            await setAuthenticatedState(session.user, session.access_token);
+          } else {
+            console.log('⏭️ Token unchanged, skipping update');
+          }
+        } else if (!session) {
+          console.log('❌ No session in auth change, clearing state');
           clearAuthState();
         }
       } catch (error) {
-        console.error('Auth state change error:', error);
+        console.error('❌ Auth state change error:', error);
         clearAuthState();
       } finally {
         setLoading(false);
@@ -171,12 +310,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       setLoading(true);
       setAuthReady(false);
       
-      // Clear any existing auth state first
+      console.log('🔐 Starting login process for:', email);
+      
+      // Clear any existing auth state first to prevent conflicts
       clearAuthState();
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -185,18 +326,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
+        console.error('❌ Login failed:', error.message);
         throw error;
       }
       
-      if (data.session) {
-        console.log('🔐 Login successful, fetching user role for:', data.session.user.email);
-        // Fetch user with role atomically
-        const userWithRole = await fetchAndSetUserWithRole(data.session.user, data.session.access_token);
-        console.log('👤 User role fetched after login:', userWithRole?.role);
+      if (!data.session?.user) {
+        throw new Error('No session returned from login');
+      }
+
+      console.log('✅ Login successful, setting authenticated state...');
+      
+      // Set authenticated state with role validation
+      const userWithRole = await setAuthenticatedState(data.session.user, data.session.access_token);
+      
+      if (!userWithRole) {
+        throw new Error('Failed to set authenticated state - user role validation failed');
+      }
+
+      // Store persistent token if remember me is enabled
+      if (rememberMe) {
+        SessionManager.setPersistentToken(data.session.access_token, { 
+          rememberMe: true,
+          duration: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
       }
       
+      console.log('🎉 Login completed successfully:', {
+        email: userWithRole.email,
+        role: userWithRole.role,
+        userId: userWithRole.id,
+        rememberMe
+      });
+      
     } catch (error) {
-      console.error('Error logging in:', error);
+      console.error('❌ Login process failed:', error);
       clearAuthState();
       throw error;
     } finally {
@@ -208,91 +371,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       setLoading(true);
+      console.log('🚪 Starting unified logout process...');
       
-      // Clear local state and storage FIRST to prevent any timing issues
-      localStorage.removeItem('token');
-      localStorage.removeItem('user_role_cache'); // Clear any role cache
+      // Clear context state first to prevent any UI inconsistencies
       setUser(null);
       setRole(null);
       setToken(null);
       
-      // Then sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-      }
+      // Use the SessionManager cleanup function
+      await SessionManager.performCompleteLogout();
       
-      // Force a complete session cleanup and navigation
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          // Clear all storage
-          localStorage.clear();
-          sessionStorage.clear();
-          // Navigate to login
-          window.location.href = '/login';
-        }
-      }, 100);
+      console.log('✅ Unified logout completed successfully');
       
     } catch (error) {
-      console.error('Error logging out:', error);
-      // Still clear local state even if Supabase call fails
-      localStorage.removeItem('token');
-      localStorage.removeItem('user_role_cache');
-      setUser(null);
-      setRole(null);
-      setToken(null);
+      console.error('❌ Logout error:', error);
       
-      // Force navigation on error too
+      // Fallback cleanup if unified logout fails
+      try {
+        setUser(null);
+        setRole(null);
+        setToken(null);
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (fallbackError) {
+        console.error('❌ Fallback cleanup failed:', fallbackError);
+      }
+    } finally {
+      setLoading(false);
+      
+      // Always navigate to login, even if there were errors
       setTimeout(() => {
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
       }, 100);
-    } finally {
-      setLoading(false);
     }
   };
 
   const forceLogout = async () => {
     try {
-      // Force clear everything
-      await supabase.auth.signOut();
-      clearRoleCache();
-      localStorage.clear();
+      console.log('🔥 Starting force logout...');
       
-      // Also try to clear sessionStorage safely
-      try {
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          sessionStorage.clear();
-        }
-      } catch (sessionError) {
-        console.warn('sessionStorage clear failed:', sessionError);
-      }
-      
-      // Clear state
+      // Clear context state immediately
       setUser(null);
       setRole(null);
       setToken(null);
       setLoading(false);
       
-      // Force reload to ensure clean state
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      // Use SessionManager for force logout
+      await SessionManager.performCompleteLogout();
+      
+      // Force page reload for complete cleanup
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+          window.location.reload();
+        }
+      }, 100);
+      
     } catch (error) {
-      console.error('Error in force logout:', error);
+      console.error('❌ Force logout failed:', error);
+      
+      // Ultimate fallback
+      try {
+        setUser(null);
+        setRole(null);
+        setToken(null);
+        setLoading(false);
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+            window.location.reload();
+          }
+        }, 100);
+      } catch (ultimateError) {
+        console.error('❌ Ultimate fallback failed:', ultimateError);
+      }
     }
   };
 
-  // Computed role checks
+  // Computed role checks with additional validation
   const isAdmin = role === 'admin';
   const isSeller = role === 'seller';
   const isBuyer = role === 'buyer';
 
+  // Enhanced authentication check - ensures token, user, and role are all present and consistent
+  const isAuthenticated = !!(
+    user && 
+    role && 
+    token && 
+    user.role === role && // Ensure user.role matches the role state
+    authReady // Only consider authenticated when auth is fully ready
+  );
+
   return (
     <AuthContext.Provider 
       value={{ 
-        isAuthenticated: !!user && !!role, // Only true when both user and role are loaded
+        isAuthenticated,
         user,
         role,
         token,

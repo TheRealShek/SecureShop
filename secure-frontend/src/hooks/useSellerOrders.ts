@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { getOrderQueryOptions, createRoleBasedEnabled, QueryKeys } from './queryOptions';
 
 interface SellerOrderItem {
   id: string;
@@ -24,19 +26,33 @@ interface SellerOrderItem {
 interface UseSellerOrdersReturn {
   orderItems: SellerOrderItem[];
   loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
+  error: Error | null;
+  refetch: () => void;
 }
 
-export function useSellerOrders(sellerId: string): UseSellerOrdersReturn {
-  const [orderItems, setOrderItems] = useState<SellerOrderItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+/**
+ * React Query-based hook for managing seller orders
+ * Ensures proper role validation and prevents duplicate requests
+ */
+export function useSellerOrders(sellerId?: string): UseSellerOrdersReturn {
+  const { user, isAuthenticated } = useAuth();
 
-  const fetchSellerOrders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Validate role-based access
+  const effectiveSellerId = sellerId || user?.id;
+
+  const {
+    data: orderItems = [],
+    isLoading: loading,
+    error,
+    refetch
+  } = useQuery<SellerOrderItem[]>({
+    queryKey: QueryKeys.sellerOrders(effectiveSellerId),
+    queryFn: async (): Promise<SellerOrderItem[]> => {
+      if (!effectiveSellerId) {
+        throw new Error('Seller ID is required');
+      }
+
+      console.log('🔍 Fetching orders for seller:', effectiveSellerId);
 
       // Start from order_items and join with products and orders
       const { data, error } = await supabase
@@ -58,10 +74,11 @@ export function useSellerOrders(sellerId: string): UseSellerOrdersReturn {
             buyer_id
           )
         `)
-        .eq('products.seller_id', sellerId)
+        .eq('products.seller_id', effectiveSellerId)
         .order('orders(created_at)', { ascending: false });
 
       if (error) {
+        console.error('❌ Failed to fetch seller orders:', error);
         throw error;
       }
 
@@ -76,25 +93,17 @@ export function useSellerOrders(sellerId: string): UseSellerOrdersReturn {
         order: Array.isArray(item.orders) ? item.orders[0] : item.orders,
       }));
 
-      setOrderItems(transformedData);
-    } catch (err) {
-      console.error('Error fetching seller orders:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (sellerId) {
-      fetchSellerOrders();
-    }
-  }, [sellerId]);
+      console.log('✅ Seller orders fetched:', transformedData.length);
+      return transformedData;
+    },
+    enabled: createRoleBasedEnabled(isAuthenticated, user?.role, ['seller', 'admin'], !!effectiveSellerId),
+    ...getOrderQueryOptions<SellerOrderItem[]>(),
+  });
 
   return {
     orderItems,
     loading,
-    error,
-    refetch: fetchSellerOrders,
+    error: error as Error | null,
+    refetch,
   };
 }

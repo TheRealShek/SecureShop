@@ -59,29 +59,38 @@ export const debugAuthState = async () => {
 };
 
 /**
- * Force clear all auth data and redirect to login
+ * Force clear all auth data and redirect to login using unified cleanup
  */
 export const debugForceLogout = async () => {
-  console.log('🧹 Forcing complete logout...');
+  console.log('🧹 Debug: Forcing complete logout with unified cleanup...');
   
   try {
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-    
-    // Clear all localStorage
-    localStorage.clear();
-    
-    // Clear sessionStorage
-    sessionStorage.clear();
-    
-    console.log('✅ Complete logout successful');
-    
-    // Force navigation
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 100);
-    
+    // Import and use the unified cleanup function
+    const { forceLogoutAndReload } = await import('./logoutCleanup');
+    await forceLogoutAndReload();
   } catch (error) {
-    console.error('❌ Force logout failed:', error);
+    console.error('❌ Debug force logout failed, using fallback:', error);
+    
+    // Fallback to original logic
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Clear all localStorage
+      localStorage.clear();
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      console.log('✅ Fallback logout successful');
+      
+      // Force navigation
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 100);
+      
+    } catch (fallbackError) {
+      console.error('❌ Fallback force logout failed:', fallbackError);
+    }
   }
 };

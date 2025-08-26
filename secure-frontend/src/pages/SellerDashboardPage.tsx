@@ -4,6 +4,7 @@ import { SellerProductService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
 import { ExclamationTriangleIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { getProductDataQueryOptions, getOrderDataQueryOptions } from '../hooks/useOptimizedQuery';
 
 export function SellerDashboardPage() {
   const { user, isAuthenticated, isSeller, authReady, logout } = useAuth();
@@ -13,14 +14,15 @@ export function SellerDashboardPage() {
     queryKey: ['seller-products', user?.id],
     queryFn: SellerProductService.getSellerProducts,
     enabled: authReady && isAuthenticated && isSeller && !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      if (error.message.includes('not authenticated') || error.message.includes('403')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    ...getProductDataQueryOptions({
+      retry: (failureCount: number, error: any) => {
+        // Don't retry on authentication errors
+        if (error.message.includes('not authenticated') || error.message.includes('403')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    }),
   });
 
   // Fetch seller's orders - ENABLED with real Supabase data
@@ -66,13 +68,14 @@ export function SellerDashboardPage() {
       }));
     },
     enabled: authReady && isAuthenticated && isSeller && !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error) => {
-      if (error.message.includes('not authenticated') || error.message.includes('403')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    ...getOrderDataQueryOptions({
+      retry: (failureCount: number, error: any) => {
+        if (error.message.includes('not authenticated') || error.message.includes('403')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    }),
   });
 
   // Helper functions for inventory overview

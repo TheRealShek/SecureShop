@@ -56,10 +56,18 @@ export function Layout() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+      console.log('🚪 Starting logout from Layout...');
       await logout();
-      navigate('/login');
+      
+      // Navigation is handled by the AuthContext logout function
+      console.log('✅ Logout completed from Layout');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('❌ Logout failed in Layout:', error);
+      
+      // Fallback navigation if logout fails
+      setTimeout(() => {
+        navigate('/login');
+      }, 100);
     } finally {
       setIsLoggingOut(false);
     }
@@ -235,7 +243,7 @@ export function Layout() {
                     )}
                     <Disclosure.Button
                       as="button"
-                      onClick={() => logout()}
+                      onClick={handleLogout}
                       className="block w-full px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg mx-2"
                     >
                       Sign out

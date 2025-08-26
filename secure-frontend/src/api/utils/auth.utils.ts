@@ -104,17 +104,28 @@ export const hasRole = async (requiredRole: string): Promise<boolean> => {
 };
 
 /**
- * Logout user and clear session
+ * Logout user and clear session using unified cleanup
  */
 export const logout = async (): Promise<void> => {
+  // Import the unified cleanup function
+  const { safeLogoutAndNavigate } = await import('../../utils/logoutCleanup');
+  
   try {
-    await supabase.auth.signOut();
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    console.log('🚪 API utils logout - using unified cleanup...');
+    await safeLogoutAndNavigate();
   } catch (error) {
-    console.error('Error during logout:', error);
-    // Force redirect even if logout fails
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    console.error('❌ API utils logout failed, using fallback:', error);
+    
+    // Fallback to original logic if unified cleanup fails
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } catch (fallbackError) {
+      console.error('❌ Fallback logout failed:', fallbackError);
+      // Force redirect even if everything fails
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
   }
 };

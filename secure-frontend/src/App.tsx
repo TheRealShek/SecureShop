@@ -23,7 +23,29 @@ import { AddProductPage } from './pages/AddProductPage';
 import { EditProductPage } from './pages/EditProductPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Disable refetch on window focus to prevent unnecessary reloads on tab switching
+      refetchOnWindowFocus: false,
+      // Extend stale time to reduce unnecessary background refetches
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      // Extend garbage collection time to keep cached data longer
+      gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
+      // Disable refetch on reconnect for stable user experience
+      refetchOnReconnect: false,
+      // Only retry failed requests once to avoid excessive network calls
+      retry: 1,
+      // Add longer retry delay
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+    mutations: {
+      // Shorter retry for mutations since they're user-initiated
+      retry: 1,
+      retryDelay: 1000,
+    },
+  },
+});
 
 
 function App() {

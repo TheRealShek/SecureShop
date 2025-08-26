@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CartService } from '../services/api';
 import { CartItem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { getRealTimeDataQueryOptions } from './useOptimizedQuery';
 
 interface UseCartResult {
   cartItems: CartItem[];
@@ -28,14 +29,15 @@ export function useCart(): UseCartResult {
     queryKey: ['cart'],
     queryFn: CartService.getCartItems,
     enabled: isAuthenticated && !!user && isBuyer, // Only run for authenticated buyers
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      if (error.message.includes('not authenticated')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    ...getRealTimeDataQueryOptions({
+      retry: (failureCount: number, error: any) => {
+        // Don't retry on authentication errors
+        if (error.message.includes('not authenticated')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    }),
   });
 
   // Add to cart mutation

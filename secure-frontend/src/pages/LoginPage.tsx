@@ -7,6 +7,7 @@ import { getRoleBasedRedirect } from '../utils/roleUtils';
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login, isAuthenticated, loading, role, authReady } = useAuth();
@@ -46,7 +47,7 @@ export function LoginPage() {
     setIsLoggingIn(true);
     
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       // Navigation will be handled by the useEffect above
       // No need for setTimeout or manual navigation here
     } catch (err) {
@@ -140,6 +141,28 @@ export function LoginPage() {
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
                   placeholder="Enter your password"
                 />
+              </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                  Keep me signed in
+                </label>
+              </div>
+              <div className="text-sm">
+                <span className="text-gray-500">
+                  (Stores login for 30 days)
+                </span>
               </div>
             </div>
 
