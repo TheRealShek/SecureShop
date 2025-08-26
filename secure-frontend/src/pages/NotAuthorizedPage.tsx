@@ -20,12 +20,18 @@ export function NotAuthorizedPage() {
         </p>
         
         <div className="mt-8 space-y-4">
-          <Link
-            to={role ? getRoleBasedRedirect(role) : '/products'}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-          >
-            Go to your dashboard
-          </Link>
+          {role ? (
+            <Link
+              to={getRoleBasedRedirect(role) || '/products'}
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              Go to your dashboard
+            </Link>
+          ) : (
+            <div className="inline-flex items-center px-6 py-3 text-gray-500">
+              Loading your dashboard...
+            </div>
+          )}
           
           <div>
             <Link

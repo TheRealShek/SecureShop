@@ -326,8 +326,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log('🔐 Starting login process for:', email);
       
-      // Clear any existing auth state first to prevent conflicts
-      clearAuthState();
+      // DON'T clear auth state here - let setAuthenticatedState handle it atomically
+      // This prevents creating a gap where user would be considered unauthenticated
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -468,13 +468,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSeller = role === 'seller';
   const isBuyer = role === 'buyer';
 
-  // Enhanced authentication check - ensures token, user, and role are all present and consistent
+  // Enhanced authentication check - more tolerant during role loading
+  // Allow authenticated = true if user && token && authReady, even while role is loading
   const isAuthenticated = !!(
     user && 
-    role && 
     token && 
-    user.role === role && // Ensure user.role matches the role state
-    authReady // Only consider authenticated when auth is fully ready
+    authReady && // Auth system is ready
+    (role || loadingRole) && // Either have role OR currently loading role
+    (!role || user.role === role) // If role exists, ensure consistency
   );
 
   return (

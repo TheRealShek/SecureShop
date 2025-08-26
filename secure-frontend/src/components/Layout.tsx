@@ -82,7 +82,7 @@ export function Layout() {
               <div className="flex h-16 justify-between">
                 <div className="flex">
                   <div className="flex flex-shrink-0 items-center">
-                    <Link to="/" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200">
+                    <Link to="/products" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200">
                       SecureShop
                     </Link>
                   </div>

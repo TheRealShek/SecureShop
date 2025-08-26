@@ -30,7 +30,7 @@ export class HookAuditor {
   static auditHook(
     hookName: string,
     hookFn: () => any,
-    expectedQueryKeys: string[]
+    _expectedQueryKeys: string[] // Prefixed with _ to indicate intentionally unused
   ): HookAuditResult {
     const result: HookAuditResult = {
       hookName,
@@ -107,7 +107,7 @@ export class HookAuditor {
   /**
    * Check if hook avoids direct storage access
    */
-  private static checkStorageAvoidance(hookFn: () => any): boolean {
+  private static checkStorageAvoidance(_hookFn: () => any): boolean {
     // In a real implementation, this would check the hook source code
     // For now, we'll assume it's correct if no storage errors occur
     return true;
@@ -134,7 +134,7 @@ export class HookAuditor {
   /**
    * Check if hook prevents unnecessary tab switch reloads
    */
-  private static checkTabSwitchPrevention(hookFn: () => any): boolean {
+  private static checkTabSwitchPrevention(_hookFn: () => any): boolean {
     // This would check query options in a real implementation
     return true; // Assume true for refactored hooks
   }
@@ -265,7 +265,7 @@ export class HookAuditor {
       document.dispatchEvent(event);
       
       // Test hook response
-      const result = hookFn();
+      hookFn(); // Execute the hook for testing
       
       Object.defineProperty(document, 'hidden', { value: false, writable: true });
       document.dispatchEvent(event);

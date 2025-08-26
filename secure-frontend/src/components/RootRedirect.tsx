@@ -22,8 +22,11 @@ export function RootRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  // Only redirect when role is truthy (not null) - prevents premature redirects
-  if (!role) {
+  // Get role-based redirect path - will be null if role not ready
+  const redirectPath = getRoleBasedRedirect(role);
+  
+  // If no redirect path available (role not ready), show loading
+  if (!redirectPath) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -32,7 +35,7 @@ export function RootRedirect() {
     );
   }
 
-  // If authenticated and role is available, redirect based on role
-  return <Navigate to={getRoleBasedRedirect(role)} replace />;
+  // Only redirect when we have a valid path (role is ready)
+  return <Navigate to={redirectPath} replace />;
 }
  

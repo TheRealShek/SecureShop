@@ -1,6 +1,6 @@
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { hasRequiredRole, type UserRole } from '../utils/roleUtils';
+import { hasRequiredRole, getRoleBasedRedirect, type UserRole } from '../utils/roleUtils';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,14 +9,17 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, loading, user, role } = useAuth();
+  const { isAuthenticated, loading, loadingRole, user, role } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  // Show loading while checking authentication or role
+  if (loading || loadingRole) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="mt-4 text-gray-600">Verifying access...</p>
+        <p className="mt-4 text-gray-600">
+          {loading ? 'Verifying access...' : 'Loading user permissions...'}
+        </p>
       </div>
     );
   }
@@ -26,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If still loading role, show loading
+  // If still loading role, show loading (extra safety check)
   if (!role) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -68,12 +71,14 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
           <p className="mt-3 text-gray-600">{denialReason}</p>
           
           <div className="mt-6 space-y-3">
-            <Link
-              to={role === 'admin' ? '/dashboard' : role === 'seller' ? '/manage-products' : '/products'}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-            >
-              Go to {role === 'admin' ? 'Dashboard' : role === 'seller' ? 'Products Management' : 'Products'}
-            </Link>
+            {role && (
+              <Link
+                to={getRoleBasedRedirect(role) || '/products'}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                Go to {role === 'admin' ? 'Dashboard' : role === 'seller' ? 'Products Management' : 'Products'}
+              </Link>
+            )}
             
             <div>
               <Link

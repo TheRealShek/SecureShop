@@ -80,9 +80,14 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
 };
 
 /**
- * Role-based redirect logic
+ * Role-based redirect logic - returns null if role is not ready to prevent premature redirects
  */
-export const getRoleBasedRedirect = (role: UserRole): string => {
+export const getRoleBasedRedirect = (role: UserRole | null): string | null => {
+  // Return null if role is not set - prevents premature redirects during loading
+  if (!role) {
+    return null;
+  }
+  
   switch (role) {
     case 'admin':
       return '/dashboard';
@@ -91,7 +96,7 @@ export const getRoleBasedRedirect = (role: UserRole): string => {
     case 'buyer':
       return '/products';
     default:
-      return '/products';
+      return '/login'; // Fallback for unknown roles - go to dashboard instead of products
   }
 };
 

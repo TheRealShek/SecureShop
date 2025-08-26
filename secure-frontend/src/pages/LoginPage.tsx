@@ -14,7 +14,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Navigation effect - only runs when auth is fully ready and role is loaded
+  // UNIFIED NAVIGATION LOGIC - Only component responsible for post-login redirect
   useEffect(() => {
     console.log('🔄 LoginPage useEffect triggered:', { 
       loading, 
@@ -24,21 +24,33 @@ export function LoginPage() {
       role 
     });
     
-    // Only proceed when ALL conditions are met: auth ready, not loading, authenticated, role loaded
-    if (authReady && !loading && !loadingRole && isAuthenticated && role) {
-      const redirectPath = getRoleBasedRedirect(role);
-      console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
-      
-      if (location.state?.from) {
-        // User was redirected here from a protected route
-        const from = location.state.from.pathname || redirectPath;
-        console.log('🔙 Redirecting to previous location:', from);
-        navigate(from, { replace: true });
-      } else {
-        // Direct navigation to login while authenticated
-        console.log('🏠 Redirecting to role-based home:', redirectPath);
-        navigate(redirectPath, { replace: true });
-      }
+    // Wait for auth to be ready and user to be authenticated
+    if (!authReady || loading || !isAuthenticated) {
+      return; // Still loading or not authenticated
+    }
+
+    // Wait for role to be fully loaded
+    if (loadingRole || !role) {
+      return; // Role still loading
+    }
+
+    // Get the redirect path - will be null if role not ready
+    const redirectPath = getRoleBasedRedirect(role);
+    if (!redirectPath) {
+      return; // Role not ready for redirect
+    }
+
+    console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
+    
+    if (location.state?.from) {
+      // User was redirected here from a protected route
+      const from = location.state.from.pathname || redirectPath;
+      console.log('🔙 Redirecting to previous location:', from);
+      navigate(from, { replace: true });
+    } else {
+      // Direct navigation to login while authenticated
+      console.log('🏠 Redirecting to role-based home:', redirectPath);
+      navigate(redirectPath, { replace: true });
     }
   }, [authReady, loading, loadingRole, isAuthenticated, role, navigate, location.state]);
 
