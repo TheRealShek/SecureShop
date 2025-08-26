@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
+  loadingRole: boolean; // New flag to indicate role is being fetched
   authReady: boolean; // New flag to indicate auth is fully loaded
   forceLogout: () => Promise<void>;
   refreshRole: () => Promise<void>;
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingRole, setLoadingRole] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   
   // Tab visibility tracking for optimized session handling
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setRole(null);
     setToken(null);
+    setLoadingRole(false);
     
     // Clear session cache through SessionManager
     SessionManager.removeSessionCache('user_data_cache');
@@ -54,15 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🔄 Setting authenticated state for:', supabaseUser.email);
       
-      // First, clear any existing state to prevent conflicts
-      clearAuthState();
+      // DON'T clear state here - wait until we have complete data
+      // This prevents the gap where user/token exist but role is null
       
-      // Fetch fresh role from database
-      console.log('� Fetching user role from database...');
+      // Set loading role flag
+      setLoadingRole(true);
+      
+      // Fetch fresh role from database FIRST
+      console.log('🔍 Fetching user role from database...');
       const userRole = await fetchUserRole(supabaseUser.id);
       
       if (!userRole) {
         console.error('❌ No role found for user:', supabaseUser.id);
+        setLoadingRole(false);
         throw new Error('User role not found');
       }
 
@@ -76,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userWithRole);
       setRole(userRole);
       setToken(accessToken);
+      setLoadingRole(false);
       
       // Cache user data and role in session storage (temporary cache)
       SessionManager.cacheUserData(userWithRole);
@@ -92,7 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
     } catch (error) {
       console.error('❌ Failed to set authenticated state:', error);
-      // If anything fails, ensure state is cleared
+      // If anything fails, ensure state is cleared including loadingRole
+      setLoadingRole(false);
       clearAuthState();
       throw error;
     }
@@ -478,6 +487,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login, 
         logout,
         loading,
+        loadingRole,
         authReady,
         forceLogout,
         refreshRole,

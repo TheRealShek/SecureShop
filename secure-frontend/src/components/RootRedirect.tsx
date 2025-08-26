@@ -3,14 +3,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { getRoleBasedRedirect } from '../utils/roleUtils';
 
 export function RootRedirect() {
-  const { isAuthenticated, loading, role } = useAuth();
+  const { isAuthenticated, loading, loadingRole, role } = useAuth();
 
-  // Show loading while checking authentication
-  if (loading) {
+  // Show loading while checking authentication or fetching role
+  if (loading || loadingRole) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="mt-4 text-gray-600">Checking authentication...</p>
+        <p className="mt-4 text-gray-600">
+          {loading ? 'Checking authentication...' : 'Loading user permissions...'}
+        </p>
       </div>
     );
   }
@@ -20,7 +22,7 @@ export function RootRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  // If authenticated but role is still loading, show loading
+  // Only redirect when role is truthy (not null) - prevents premature redirects
   if (!role) {
     return (
       <div className="flex items-center justify-center h-screen">

@@ -10,21 +10,22 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, isAuthenticated, loading, role, authReady } = useAuth();
+  const { login, isAuthenticated, loading, loadingRole, role, authReady } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Navigation effect - only runs when auth is fully ready
+  // Navigation effect - only runs when auth is fully ready and role is loaded
   useEffect(() => {
     console.log('🔄 LoginPage useEffect triggered:', { 
       loading, 
+      loadingRole,
       authReady, 
       isAuthenticated, 
       role 
     });
     
-    // Only proceed if auth is ready and user is authenticated with a role
-    if (authReady && !loading && isAuthenticated && role) {
+    // Only proceed when ALL conditions are met: auth ready, not loading, authenticated, role loaded
+    if (authReady && !loading && !loadingRole && isAuthenticated && role) {
       const redirectPath = getRoleBasedRedirect(role);
       console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
       
@@ -39,7 +40,7 @@ export function LoginPage() {
         navigate(redirectPath, { replace: true });
       }
     }
-  }, [authReady, loading, isAuthenticated, role, navigate, location.state]);
+  }, [authReady, loading, loadingRole, isAuthenticated, role, navigate, location.state]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -58,13 +59,15 @@ export function LoginPage() {
     }
   };
 
-  // Show loading state while checking authentication
-  if (loading || !authReady) {
+  // Show loading state while checking authentication or loading role
+  if (loading || loadingRole || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading...</p>
+          <p className="mt-4 text-gray-600 font-medium">
+            {loadingRole ? 'Loading user permissions...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
