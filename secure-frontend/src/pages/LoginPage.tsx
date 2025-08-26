@@ -44,9 +44,40 @@ export function LoginPage() {
     
     if (location.state?.from) {
       // User was redirected here from a protected route
-      const from = location.state.from.pathname || redirectPath;
-      console.log('🔙 Redirecting to previous location:', from);
-      navigate(from, { replace: true });
+      const requestedPath = location.state.from.pathname;
+      console.log('🔍 Checking access to previous location:', requestedPath);
+      
+      // CRITICAL: Validate if user actually has access to the requested path
+      // This prevents redirect loops when user tries to access routes they don't have permission for
+      
+      // Simple role-based path validation to prevent redirect loops
+      const isValidRedirect = (() => {
+        // Admin paths - only admin can access
+        if (requestedPath.startsWith('/dashboard') || requestedPath.startsWith('/manage-products')) {
+          return role === 'admin';
+        }
+        
+        // Seller paths - seller or admin can access
+        if (requestedPath.startsWith('/seller/')) {
+          return role === 'seller' || role === 'admin';
+        }
+        
+        // General protected paths - all authenticated users can access
+        if (requestedPath.startsWith('/products') || requestedPath.startsWith('/cart') || requestedPath.startsWith('/orders')) {
+          return true; // All roles can access these
+        }
+        
+        // Default: redirect to role-based home instead
+        return false;
+      })();
+      
+      if (isValidRedirect) {
+        console.log('✅ Access granted, redirecting to previous location:', requestedPath);
+        navigate(requestedPath, { replace: true });
+      } else {
+        console.log('❌ Access denied to previous location, redirecting to role-based home:', redirectPath);
+        navigate(redirectPath, { replace: true });
+      }
     } else {
       // Direct navigation to login while authenticated
       console.log('🏠 Redirecting to role-based home:', redirectPath);

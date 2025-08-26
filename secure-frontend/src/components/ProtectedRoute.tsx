@@ -12,8 +12,22 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
   const { isAuthenticated, loading, loadingRole, user, role } = useAuth();
   const location = useLocation();
 
-  // Show loading while checking authentication or role
+  // Debug logging for flow tracking
+  console.log('🛡️ ProtectedRoute check:', {
+    path: location.pathname,
+    isAuthenticated,
+    loading,
+    loadingRole,
+    hasUser: !!user,
+    role,
+    allowedRoles,
+    requiredRole
+  });
+
+  // CRITICAL: Wait for BOTH authentication AND role to be completely loaded
+  // This prevents premature access decisions before Supabase data is ready
   if (loading || loadingRole) {
+    console.log('⏳ ProtectedRoute: Still loading, showing spinner');
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -26,18 +40,19 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
 
   // If not authenticated at all, redirect to login
   if (!isAuthenticated || !user) {
+    console.log('🚫 ProtectedRoute: Not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If still loading role, show loading (extra safety check)
+  // IMPORTANT: Only proceed if we have a valid role from Supabase
+  // If loadingRole is false but role is still null, it means there was an error
+  // In this case, we should redirect to login to re-authenticate
   if (!role) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="mt-4 text-gray-600">Loading user permissions...</p>
-      </div>
-    );
+    console.warn('⚠️ ProtectedRoute: No role available after loading completed, redirecting to login');
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  console.log('✅ ProtectedRoute: All checks passed, proceeding with access control');
 
   // Check role-based access
   let hasAccess = true;
