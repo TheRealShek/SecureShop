@@ -12,6 +12,11 @@ export function ManageProductsPage() {
   const { data: products, isLoading, error } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: () => ProductService.getAll(),
+    staleTime: 15 * 60 * 1000, // 15 minutes - products don't change frequently
+    gcTime: 45 * 60 * 1000, // 45 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
+    retry: 2,
   });
 
   const createMutation = useMutation({

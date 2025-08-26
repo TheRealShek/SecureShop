@@ -81,6 +81,11 @@ export function EditProductPage() {
       };
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes - product data for editing doesn't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
+    retry: 2,
   });
 
   // Set form data when product loads

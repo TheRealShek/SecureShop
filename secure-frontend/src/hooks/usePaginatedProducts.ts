@@ -41,7 +41,10 @@ export function usePaginatedProducts(): UsePaginatedProductsResult {
       const currentOffset = allPages.length * PRODUCTS_PER_PAGE;
       return currentOffset < lastPage.totalCount ? currentOffset : undefined;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - products don't change frequently
+    gcTime: 45 * 60 * 1000, // 45 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
     retry: 2,
   });
 

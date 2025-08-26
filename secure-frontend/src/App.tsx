@@ -23,7 +23,31 @@ import { AddProductPage } from './pages/AddProductPage';
 import { EditProductPage } from './pages/EditProductPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 
-const queryClient = new QueryClient();
+// Configure QueryClient with optimized settings for session persistence
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Disable automatic refetching on window focus
+      refetchOnWindowFocus: false,
+      // Disable automatic refetching when component remounts
+      refetchOnMount: false,
+      // Only refetch on reconnect if data is stale
+      refetchOnReconnect: 'always',
+      // Data stays fresh for 10 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      // Keep data in cache for 30 minutes after component unmounts
+      gcTime: 30 * 60 * 1000, // 30 minutes (was cacheTime in older versions)
+      // Retry failed requests up to 2 times
+      retry: 2,
+      // Exponential backoff for retries
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+    mutations: {
+      // Retry failed mutations once
+      retry: 1,
+    },
+  },
+});
 
 
 function App() {

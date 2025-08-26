@@ -39,6 +39,11 @@ export function SellerProductsPage() {
     queryKey: ['seller-products', user?.id],
     queryFn: SellerProductService.getSellerProducts,
     enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
+    retry: 2,
   });
 
   // Delete product mutation

@@ -1,8 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getRoleBasedRedirect } from '../utils/roleUtils';
 
 export function AuthenticatedHome() {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, role } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -17,8 +18,18 @@ export function AuthenticatedHome() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user came from somewhere specific, go back there
-  const from = location.state?.from?.pathname || '/dashboard';
+  // If role is not loaded yet, show loading
+  if (!role) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <p className="mt-4 text-gray-600">Loading user permissions...</p>
+      </div>
+    );
+  }
+
+  // If user came from somewhere specific, go back there, otherwise use role-based redirect
+  const from = location.state?.from?.pathname || getRoleBasedRedirect(role);
   if (location.pathname === '/' && from !== '/') {
     return <Navigate to={from} replace />;
   }

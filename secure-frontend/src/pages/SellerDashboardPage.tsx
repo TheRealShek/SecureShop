@@ -13,7 +13,10 @@ export function SellerDashboardPage() {
     queryKey: ['seller-products', user?.id],
     queryFn: SellerProductService.getSellerProducts,
     enabled: authReady && isAuthenticated && isSeller && !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - seller products don't change that frequently
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('not authenticated') || error.message.includes('403')) {
@@ -66,7 +69,10 @@ export function SellerDashboardPage() {
       }));
     },
     enabled: authReady && isAuthenticated && isSeller && !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - orders change less frequently
+    gcTime: 20 * 60 * 1000, // 20 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
     retry: (failureCount, error) => {
       if (error.message.includes('not authenticated') || error.message.includes('403')) {
         return false;

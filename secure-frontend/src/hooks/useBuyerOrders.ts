@@ -19,8 +19,10 @@ export function useBuyerCart() {
     queryKey: ['buyer-cart', user?.id],
     queryFn: BuyerService.getBuyerCart,
     enabled: isAuthenticated && isBuyer && !!user?.id,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - cart doesn't change that often
+    gcTime: 15 * 60 * 1000, // 15 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
   });
 
   const {
@@ -30,7 +32,10 @@ export function useBuyerCart() {
     queryKey: ['buyer-cart-count', user?.id],
     queryFn: BuyerService.getBuyerCartCount,
     enabled: isAuthenticated && isBuyer && !!user?.id,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
   });
 
   const totalPrice = cartItems.reduce(
@@ -64,8 +69,10 @@ export function useBuyerOrders() {
     queryKey: ['buyer-orders', user?.id],
     queryFn: BuyerService.getBuyerOrders,
     enabled: isAuthenticated && isBuyer && !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - orders don't change frequently
+    gcTime: 20 * 60 * 1000, // 20 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
   });
 
   // Calculate order statistics
@@ -107,7 +114,10 @@ export function useBuyerOrderDetails(orderId: string | null) {
     queryKey: ['buyer-order-details', orderId, user?.id],
     queryFn: () => orderId ? BuyerService.getBuyerOrderDetails(orderId) : null,
     enabled: isAuthenticated && isBuyer && !!user?.id && !!orderId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - order details are fairly static
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
   });
 
   return {

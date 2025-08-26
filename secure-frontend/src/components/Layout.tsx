@@ -15,12 +15,17 @@ function classNames(...classes: string[]) {
 }
 
 export function Layout() {
-  const { isAuthenticated, user, logout, role } = useAuth();
+  const { isAuthenticated, user, logout, role, loading, authReady } = useAuth();
   const { totalItems } = useCart();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   const navigation: NavigationItem[] = useMemo(() => {
+    // Don't show role-specific navigation if auth is not ready
+    if (loading || !authReady) {
+      return [{ name: 'Products', href: '/products' }];
+    }
+
     const baseNav = [
       { name: 'Products', href: '/products' },
     ];
@@ -51,7 +56,7 @@ export function Layout() {
     }
 
     return baseNav;
-  }, [isAuthenticated, role]);
+  }, [isAuthenticated, role, loading, authReady]);
 
   const handleLogout = async () => {
     try {
@@ -106,7 +111,7 @@ export function Layout() {
                   </Disclosure.Button>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
-                  {isAuthenticated ? (
+                  {isAuthenticated && authReady ? (
                     <>
                       {/* Cart - Only show for buyers and admins */}
                       {(role === 'buyer' || role === 'admin') && (
@@ -176,6 +181,12 @@ export function Layout() {
                         </Transition>
                       </Menu>
                     </>
+                  ) : loading || !authReady ? (
+                    // Show loading state during auth transitions
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-pulse h-6 w-6 bg-gray-300 rounded-full"></div>
+                      <div className="animate-pulse h-4 w-16 bg-gray-300 rounded"></div>
+                    </div>
                   ) : (
                     <Link
                       to="/login"
@@ -201,7 +212,7 @@ export function Layout() {
                     {item.name}
                   </Disclosure.Button>
                 ))}
-                {!isAuthenticated && (
+                {!isAuthenticated && !loading && authReady && (
                   <Disclosure.Button
                     as={Link}
                     to="/login"
@@ -210,8 +221,13 @@ export function Layout() {
                     Sign in
                   </Disclosure.Button>
                 )}
+                {(loading || !authReady) && (
+                  <div className="py-2 pl-3 pr-4">
+                    <div className="animate-pulse h-4 w-20 bg-gray-300 rounded"></div>
+                  </div>
+                )}
               </div>
-              {isAuthenticated && (
+              {isAuthenticated && authReady && (
                 <div className="border-t border-gray-200 pb-3 pt-4">
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">

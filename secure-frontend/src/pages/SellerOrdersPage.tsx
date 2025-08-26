@@ -24,6 +24,11 @@ export function SellerOrdersPage() {
     queryKey: ['seller-orders', user?.id],
     queryFn: OrderService.getSellerOrders,
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes - orders can change more frequently
+    gcTime: 20 * 60 * 1000, // 20 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
+    retry: 2,
   });
 
   // Update order status mutation

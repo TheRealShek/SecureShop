@@ -56,7 +56,10 @@ export function useCheckoutSummary() {
     queryKey: ['checkout-summary', user?.id],
     queryFn: CheckoutService.getCheckoutSummary,
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes - checkout data can change quickly
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
   });
 
   return {

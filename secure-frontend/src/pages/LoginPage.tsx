@@ -1,6 +1,6 @@
-import { FormEvent, useState, useEffect } from 'react';
+import { FormEvent, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import { LockClosedIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { getRoleBasedRedirect } from '../utils/roleUtils';
 
@@ -10,35 +10,14 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login, isAuthenticated, loading, role, authReady } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
 
-  // Navigation effect - only runs when auth is fully ready
-  useEffect(() => {
-    console.log('🔄 LoginPage useEffect triggered:', { 
-      loading, 
-      authReady, 
-      isAuthenticated, 
-      role 
-    });
-    
-    // Only proceed if auth is ready and user is authenticated with a role
-    if (authReady && !loading && isAuthenticated && role) {
-      const redirectPath = getRoleBasedRedirect(role);
-      console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
-      
-      if (location.state?.from) {
-        // User was redirected here from a protected route
-        const from = location.state.from.pathname || redirectPath;
-        console.log('🔙 Redirecting to previous location:', from);
-        navigate(from, { replace: true });
-      } else {
-        // Direct navigation to login while authenticated
-        console.log('🏠 Redirecting to role-based home:', redirectPath);
-        navigate(redirectPath, { replace: true });
-      }
-    }
-  }, [authReady, loading, isAuthenticated, role, navigate, location.state]);
+  // If already authenticated and auth is ready, redirect immediately
+  if (authReady && !loading && isAuthenticated && role) {
+    const redirectPath = getRoleBasedRedirect(role);
+    const from = location.state?.from?.pathname || redirectPath;
+    return <Navigate to={from} replace />;
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,8 +26,7 @@ export function LoginPage() {
     
     try {
       await login(email, password);
-      // Navigation will be handled by the useEffect above
-      // No need for setTimeout or manual navigation here
+      // Navigation will be handled by the redirect above or by RootRedirect
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
       console.error('Login error:', err);

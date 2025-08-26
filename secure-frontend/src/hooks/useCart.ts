@@ -28,7 +28,10 @@ export function useCart(): UseCartResult {
     queryKey: ['cart'],
     queryFn: CartService.getCartItems,
     enabled: isAuthenticated && !!user && isBuyer, // Only run for authenticated buyers
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - data stays fresh longer
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: false, // Don't refetch when component remounts
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error.message.includes('not authenticated')) {
