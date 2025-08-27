@@ -14,6 +14,7 @@ interface AuthContextType {
   role: UserRole | null;
   token: string | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  register: (email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   loadingRole: boolean; // New flag to indicate role is being fetched
@@ -377,6 +378,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (email: string, password: string, role: UserRole) => {
+    try {
+      setLoading(true);
+      setAuthReady(false);
+      
+      console.log('🔐 Starting registration process for:', email, 'with role:', role);
+      
+      // Step 1: Create user in Supabase Auth with role in metadata
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: role
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('❌ Registration failed:', error.message);
+        throw error;
+      }
+      
+      if (!data.user) {
+        throw new Error('No user returned from registration');
+      }
+
+      console.log('✅ Supabase Auth registration successful, creating user record...');
+      
+      // Step 2: Insert user into the users table with the same ID and role
+      const { error: dbError } = await supabase
+        .from('users')
+        .insert({
+          id: data.user.id,
+          email: email,
+          password_hash: '', // This will be managed by Supabase Auth
+          role: role
+        });
+        
+      if (dbError) {
+        console.error('❌ Failed to create user record in database:', dbError.message);
+        // If database insert fails, we should clean up the auth user
+        // Note: In production, this should be handled by database triggers or RLS
+        throw new Error(`Failed to create user profile: ${dbError.message}`);
+      }
+
+      console.log('✅ User record created in database successfully');
+      
+      // Step 3: If registration successful and session exists, authenticate the user
+      if (data.session?.user && data.session?.access_token) {
+        console.log('✅ Registration completed with session, authenticating user...');
+        
+        // Set authenticated state with role validation
+        const userWithRole = await setAuthenticatedState(data.session.user, data.session.access_token);
+        
+        if (!userWithRole) {
+          throw new Error('Failed to authenticate after registration');
+        }
+
+        console.log('🎉 Registration and authentication completed successfully:', {
+          email: userWithRole.email,
+          role: userWithRole.role,
+          userId: userWithRole.id
+        });
+      } else {
+        console.log('📧 Registration successful, please check email for confirmation');
+        // If no session (email confirmation required), clear loading state
+        clearAuthState();
+      }
+      
+    } catch (error) {
+      console.error('❌ Registration process failed:', error);
+      clearAuthState();
+      throw error;
+    } finally {
+      setLoading(false);
+      setAuthReady(true);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -485,7 +566,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         role,
         token,
-        login, 
+        login,
+        register,
         logout,
         loading,
         loadingRole,

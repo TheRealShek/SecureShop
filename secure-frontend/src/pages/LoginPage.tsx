@@ -1,16 +1,26 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LockClosedIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, EnvelopeIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { getRoleBasedRedirect } from '../utils/roleUtils';
+import type { UserRole } from '../utils/roleUtils';
 
 export function LoginPage() {
+  // Common state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { login, isAuthenticated, loading, loadingRole, role, authReady } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Login specific state
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // Registration specific state
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('buyer');
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  
+  const { login, register, isAuthenticated, loading, loadingRole, role, authReady } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,18 +61,48 @@ export function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoggingIn(true);
+    setIsLoading(true);
     
     try {
-      await login(email, password, rememberMe);
-      // Navigation will be handled by the useEffect above
-      // No need for setTimeout or manual navigation here
-    } catch (err) {
-      setError('Failed to log in. Please check your credentials.');
-      console.error('Login error:', err);
+      if (isRegisterMode) {
+        // Registration validation
+        if (password !== confirmPassword) {
+          setError('Passwords do not match.');
+          return;
+        }
+        
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters long.');
+          return;
+        }
+        
+        await register(email, password, selectedRole);
+        // Navigation will be handled by the useEffect above
+      } else {
+        // Login
+        await login(email, password, rememberMe);
+        // Navigation will be handled by the useEffect above
+      }
+    } catch (err: any) {
+      if (isRegisterMode) {
+        setError(err.message || 'Failed to create account. Please try again.');
+      } else {
+        setError('Failed to log in. Please check your credentials.');
+      }
+      console.error(isRegisterMode ? 'Registration error:' : 'Login error:', err);
     } finally {
-      setIsLoggingIn(false);
+      setIsLoading(false);
     }
+  };
+
+  const toggleMode = () => {
+    setIsRegisterMode(!isRegisterMode);
+    setError('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setRememberMe(false);
+    setSelectedRole('buyer');
   };
 
   // Show loading state while checking authentication or loading role
@@ -88,10 +128,13 @@ export function LoginPage() {
             <LockClosedIcon className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Welcome back
+            {isRegisterMode ? 'Create Account' : 'Welcome back'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to your SecureShop account
+            {isRegisterMode 
+              ? 'Join SecureShop as a buyer or seller' 
+              : 'Sign in to your SecureShop account'
+            }
           </p>
         </div>
 
@@ -143,7 +186,7 @@ export function LoginPage() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete={isRegisterMode ? "new-password" : "current-password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -153,42 +196,105 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Remember Me Checkbox */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Keep me signed in
+            {/* Confirm Password Field - Only for Registration */}
+            {isRegisterMode && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirm Password
                 </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                    placeholder="Confirm your password"
+                  />
+                </div>
               </div>
-              <div className="text-sm">
-                <span className="text-gray-500">
-                  (Stores login for 30 days)
-                </span>
+            )}
+
+            {/* Role Selection - Only for Registration */}
+            {isRegisterMode && (
+              <div>
+                <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Account Type
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as UserRole)}
+                  className="block w-full px-3 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                >
+                  <option value="buyer">Buyer - Shop for products</option>
+                  <option value="seller">Seller - Sell your products</option>
+                </select>
               </div>
-            </div>
+            )}
+
+            {/* Remember Me Checkbox - Only for Login */}
+            {!isRegisterMode && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                    Keep me signed in
+                  </label>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-500">
+                    (Stores login for 30 days)
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading || isLoggingIn}
+                disabled={loading || isLoading}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <LockClosedIcon className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400 transition-colors duration-200" />
                 </span>
-                {isLoggingIn ? 'Signing in...' : 'Sign in'}
+                {isLoading 
+                  ? (isRegisterMode ? 'Creating account...' : 'Signing in...') 
+                  : (isRegisterMode ? 'Create Account' : 'Sign in')
+                }
               </button>
             </div>
           </form>
+
+          {/* Toggle Mode */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={toggleMode}
+              className="text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors duration-200"
+            >
+              {isRegisterMode 
+                ? 'Already have an account? Sign in' 
+                : "Don't have an account? Create one"
+              }
+            </button>
+          </div>
         </div>
 
         {/* Footer */}
