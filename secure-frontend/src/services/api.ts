@@ -158,6 +158,7 @@ export const ProductService = {
             stock: item.stock || 0, // Add stock field
             image: item.image || FALLBACK_IMAGE_URL,
             sellerId: item.seller_id,
+            rating: item.rating || 0, // Include rating field
             createdAt: item.created_at,
           };
         });
@@ -201,6 +202,7 @@ export const ProductService = {
         stock: Number(item.stock) || 0, // Add stock field with proper type conversion
         image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
+        rating: item.rating || 0, // Fetch rating for buyers
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
       }));
 
@@ -228,6 +230,7 @@ export const ProductService = {
           stock: item.stock || 0, // Add stock field
           image: item.image || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
+          rating: item.rating || 0, // Include rating field
           createdAt: item.created_at,
         }));
         
@@ -277,6 +280,7 @@ export const ProductService = {
         stock: Number(item.stock) || 0, // Add stock field with proper type conversion
         image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
+        rating: item.rating || 0, // Fetch rating for buyers
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
       }));
 
@@ -301,8 +305,10 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
+        stock: item.stock || 0,
         image: item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id,
+        rating: item.rating || 0,
         createdAt: item.created_at,
       };
     } catch (error) {
@@ -311,7 +317,7 @@ export const ProductService = {
     }
   },
 
-  create: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+  create: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
     try {
       // Transform frontend data to backend format
       const backendData = {
@@ -330,8 +336,10 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
+        stock: item.stock || 0,
         image: item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id,
+        rating: item.rating || 5.0, // Include rating from backend
         createdAt: item.created_at,
       };
     } catch (error) {
@@ -688,6 +696,7 @@ export const SellerProductService = {
           stock: Number(item.stock) || 0,
           image: item.image_url || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
+          rating: item.rating || 0,
           createdAt: item.created_at || new Date().toISOString(),
         };
         
@@ -713,7 +722,7 @@ export const SellerProductService = {
   },
 
   // Create product (automatically assigns to current seller) - Direct Supabase
-  createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+  createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
     console.log('🏪 [DEBUG] Creating product via Supabase directly:', productData);
     
     try {
@@ -737,7 +746,8 @@ export const SellerProductService = {
           price: productData.price,
           image_url: productData.image,
           seller_id: sellerId,
-          stock: productData.stock || 0 // Use stock from form data
+          stock: productData.stock || 0, // Use stock from form data
+          rating: 5.0 // Default rating for new products
         })
         .select()
         .single();
@@ -758,6 +768,7 @@ export const SellerProductService = {
         stock: Number(insertedData.stock) || 0,
         image: insertedData.image_url || FALLBACK_IMAGE_URL,
         sellerId: insertedData.seller_id,
+        rating: insertedData.rating || 5.0, // Include rating from database
         createdAt: insertedData.created_at,
       };
       

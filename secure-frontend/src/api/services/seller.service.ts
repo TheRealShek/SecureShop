@@ -82,7 +82,7 @@ const getSellerProducts = async (): Promise<Product[]> => {
  * @param productData - Product data without ID, createdAt, and sellerId
  * @returns Promise<Product> The created product
  */
-const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
   console.log('🏪 [DEBUG] Creating product via Supabase directly:', productData);
   
   try {
@@ -106,7 +106,8 @@ const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'se
         price: productData.price,
         image_url: productData.image,
         seller_id: sellerId,
-        stock: 10 // Default stock - you can make this configurable
+        stock: productData.stock || 10, // Use stock from form data or default to 10
+        rating: 5.0 // Default rating for new products
       })
       .select()
       .single();

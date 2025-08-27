@@ -22,8 +22,10 @@ export const transformBackendProduct = (item: any): Product => {
     name: item.name,
     description: item.description,
     price: item.price,
+    stock: item.stock || 0,
     image: item.image || FALLBACK_IMAGE_URL,
     sellerId: item.seller_id,
+    rating: item.rating || 0,
     createdAt: item.created_at,
   };
 };
@@ -40,8 +42,10 @@ export const transformSupabaseProduct = (item: any): Product => {
     name: item.name,
     description: item.description || '',
     price: Number(item.price),
+    stock: Number(item.stock) || 0,
     image: item.image_url || item.image || FALLBACK_IMAGE_URL,
     sellerId: item.seller_id || item.sellerId || '',
+    rating: item.rating || 0,
     createdAt: item.created_at || item.createdAt || new Date().toISOString(),
   };
 };
@@ -52,7 +56,7 @@ export const transformSupabaseProduct = (item: any): Product => {
  * @param productData - Frontend product data
  * @returns Object - Backend-formatted product data
  */
-export const transformProductToBackend = (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>) => {
+export const transformProductToBackend = (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>) => {
   return {
     name: productData.name,
     description: productData.description,

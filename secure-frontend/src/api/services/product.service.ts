@@ -186,7 +186,7 @@ const getById = async (id: string): Promise<Product> => {
  * @param productData - Product data without ID, createdAt, and sellerId
  * @returns Promise<Product> The created product
  */
-const create = async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId'>): Promise<Product> => {
+const create = async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
   try {
     // Transform frontend data to backend format
     const backendData = transformProductToBackend(productData);

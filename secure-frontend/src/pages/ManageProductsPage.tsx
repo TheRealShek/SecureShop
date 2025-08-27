@@ -15,7 +15,7 @@ export function ManageProductsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: Omit<Product, 'id' | 'createdAt' | 'sellerId'>) =>
+    mutationFn: (data: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>) =>
       ProductService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

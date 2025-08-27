@@ -14,7 +14,8 @@ export interface Product {
   image_url?: string; // Database field name
   sellerId: string;
   stock?: number; // Optional for backward compatibility
-  createdAt: string;
+  rating?: number; // Product rating for buyers
+  createdAt: string; // Keep for admin/seller views
 }
 
 export interface CartItem {
