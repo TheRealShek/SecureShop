@@ -2,6 +2,8 @@ export { useProductData } from './useProductData';
 export { useAddToCart } from './useAddToCart';
 export { useProducts } from './useProducts';
 export { usePaginatedProducts } from './usePaginatedProducts';
+export { useProgressiveProducts } from './useProgressiveProducts';
+export { useProgressivePaginatedProducts } from './useProgressivePaginatedProducts';
 export { useCart } from './useCart';
 export { useSortedProducts } from './useSortedProducts';
 export { useSellerProducts } from './useSellerProducts';

@@ -18,6 +18,23 @@ export interface Product {
   createdAt: string; // Keep for admin/seller views
 }
 
+// Lightweight product interface for fast initial loading (buyer side)
+export interface LightweightProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  rating: number;
+}
+
+// Extended product fields for background loading
+export interface ProductExtendedFields {
+  description: string;
+  stock: number;
+  createdAt: string;
+  sellerId: string;
+}
+
 export interface CartItem {
   id: string;
   productId: string;

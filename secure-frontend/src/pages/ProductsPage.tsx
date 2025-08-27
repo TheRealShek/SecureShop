@@ -1,5 +1,5 @@
 import { useState, useMemo, Suspense, lazy } from 'react';
-import { usePaginatedProducts, useSortedProducts, useDebounce } from '../hooks';
+import { useProgressivePaginatedProducts, useSortedProducts, useDebounce } from '../hooks';
 import { useCart } from '../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductGrid } from '../components/ProductGrid';
@@ -42,6 +42,7 @@ export function ProductsPage() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Use progressive loading for all users (optimized for buyers)
   const { 
     products, 
     isLoading, 
@@ -49,8 +50,9 @@ export function ProductsPage() {
     error, 
     hasMore, 
     loadMore, 
-    remainingCount 
-  } = usePaginatedProducts();
+    remainingCount,
+    isBackgroundLoading
+  } = useProgressivePaginatedProducts();
   
   // Apply sorting to the products
   const sortedProducts = useSortedProducts(products, sortBy);
@@ -113,7 +115,7 @@ export function ProductsPage() {
   };
 
   const handleDeleteProduct = (productId: string) => {
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p: Product) => p.id === productId);
     if (product) {
       setDeletingProduct({ id: productId, name: product.name });
     }
@@ -215,9 +217,18 @@ export function ProductsPage() {
             
             {/* Sort Controls */}
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-slate-600">
-                {filteredProducts.length} products
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-600">
+                  {filteredProducts.length} products
+                </span>
+                {/* Background loading indicator for buyers */}
+                {isBackgroundLoading && (
+                  <div className="flex items-center gap-1 text-xs text-indigo-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border border-indigo-200 border-t-indigo-600"></div>
+                    <span>Loading details...</span>
+                  </div>
+                )}
+              </div>
               <ProductSort 
                 sortBy={sortBy} 
                 onSortChange={setSortBy}
