@@ -155,6 +155,7 @@ export const ProductService = {
             name: item.name,
             description: item.description,
             price: item.price,
+            stock: item.stock || 0, // Add stock field
             image: item.image || FALLBACK_IMAGE_URL,
             sellerId: item.seller_id,
             createdAt: item.created_at,
@@ -197,6 +198,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
+        stock: Number(item.stock) || 0, // Add stock field with proper type conversion
         image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
@@ -223,6 +225,7 @@ export const ProductService = {
           name: item.name,
           description: item.description,
           price: item.price,
+          stock: item.stock || 0, // Add stock field
           image: item.image || FALLBACK_IMAGE_URL,
           sellerId: item.seller_id,
           createdAt: item.created_at,
@@ -271,6 +274,7 @@ export const ProductService = {
         name: item.name,
         description: item.description,
         price: item.price,
+        stock: Number(item.stock) || 0, // Add stock field with proper type conversion
         image: item.image_url || item.image || FALLBACK_IMAGE_URL,
         sellerId: item.seller_id || item.sellerId || '',
         createdAt: item.created_at || item.createdAt || new Date().toISOString(),
@@ -424,6 +428,7 @@ export const CartService = {
           name: item.products.name,
           description: item.products.description,
           price: item.products.price,
+          stock: Number(item.products.stock) || 0, // Add stock field
           image: item.products.image_url || FALLBACK_IMAGE_URL,
           sellerId: item.products.seller_id,
           createdAt: item.products.created_at,

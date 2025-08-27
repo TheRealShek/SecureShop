@@ -16,7 +16,8 @@ function classNames(...classes: string[]) {
 
 export function Layout() {
   const { isAuthenticated, user, logout, role } = useAuth();
-  const { totalItems } = useCart();
+  // Only use cart for non-admin users
+  const { totalItems } = role === 'admin' ? { totalItems: 0 } : useCart();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
@@ -26,22 +27,20 @@ export function Layout() {
     ];
 
     if (isAuthenticated && role) {
-      // For buyers, add Orders
+      // For buyers, add cart and orders
       if (role === 'buyer') {
         baseNav.push({ name: 'Orders', href: '/orders' });
         return baseNav;
       }
       
-      // For other roles, add their specific navigation items
+      // For admin - NO cart functionality, only dashboard
       if (role === 'admin') {
-        baseNav.push(
-          { name: 'Cart', href: '/cart' },
-          { name: 'Orders', href: '/orders' },
-          { name: 'Dashboard', href: '/dashboard' }
-        );
+        // Admin gets redirected to dashboard if they try to access other routes
+        // No cart or products navigation for admin
+        return [{ name: 'Dashboard', href: '/dashboard' }];
       }
       
-      if (role === 'seller' || role === 'admin') {
+      if (role === 'seller') {
         baseNav.push(
           { name: 'Seller Dashboard', href: '/seller/dashboard' },
           { name: 'My Products', href: '/seller/products' },
@@ -116,8 +115,8 @@ export function Layout() {
                 <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
                   {isAuthenticated ? (
                     <>
-                      {/* Cart - Only show for buyers and admins */}
-                      {(role === 'buyer' || role === 'admin') && (
+                      {/* Cart - Only show for buyers (NOT for admin) */}
+                      {role === 'buyer' && (
                         <Link
                           to="/cart"
                           className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SellerProductService } from '../services/api';
 import { supabase } from '../services/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProductFormData {
   name: string;
@@ -24,6 +25,7 @@ export function EditProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
   
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -37,11 +39,11 @@ export function EditProductPage() {
 
   // Fetch product data directly from Supabase for editing
   const { data: product, isLoading, error } = useQuery({
-    queryKey: ['seller-product', id],
+    queryKey: role === 'admin' ? ['admin-product', id] : ['seller-product', id],
     queryFn: async () => {
       if (!id) throw new Error('Product ID is required');
       
-      console.log('🔍 [DEBUG] Fetching product for edit via Supabase:', id);
+      console.log('🔍 [DEBUG] Fetching product for edit via Supabase:', id, 'Role:', role);
       
       // Get current authenticated user
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -49,13 +51,18 @@ export function EditProductPage() {
         throw new Error('User not authenticated');
       }
       
-      // Fetch product from Supabase, ensuring it belongs to the current seller
-      const { data: productData, error: productError } = await supabase
+      // Admin can edit any product, seller can only edit their own products
+      let query = supabase
         .from('products')
         .select('*')
-        .eq('id', id)
-        .eq('seller_id', userData.user.id) // Security: only fetch if seller owns the product
-        .single();
+        .eq('id', id);
+        
+      // If not admin, restrict to seller's own products
+      if (role !== 'admin') {
+        query = query.eq('seller_id', userData.user.id);
+      }
+      
+      const { data: productData, error: productError } = await query.single();
       
       if (productError) {
         console.error('❌ [DEBUG] Error fetching product for edit:', productError);
@@ -80,7 +87,7 @@ export function EditProductPage() {
         createdAt: productData.created_at,
       };
     },
-    enabled: !!id,
+    enabled: !!id && !!role, // Also wait for role to be loaded
   });
 
   // Set form data when product loads
@@ -105,18 +112,81 @@ export function EditProductPage() {
   }, [product]);
 
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ProductFormData> }) =>
-      SellerProductService.updateProduct(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductFormData> }) => {
+      // Admin can update any product, seller can only update their own
+      if (role === 'admin') {
+        // Admin update - directly update via Supabase without seller restrictions
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) {
+          throw new Error('User not authenticated');
+        }
+
+        // First, check if the product exists
+        const { data: existingProduct, error: checkError } = await supabase
+          .from('products')
+          .select('id')
+          .eq('id', id)
+          .single();
+
+        if (checkError || !existingProduct) {
+          throw new Error('Product not found');
+        }
+
+        // Prepare update data - map frontend fields to database fields
+        const updateData: any = {};
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.price !== undefined) updateData.price = data.price;
+        if (data.stock !== undefined) updateData.stock = data.stock;
+        if (data.image !== undefined) updateData.image_url = data.image;
+
+        console.log('🔄 [DEBUG] Admin updating product:', { id, updateData });
+
+        const { data: updatedData, error: updateError } = await supabase
+          .from('products')
+          .update(updateData)
+          .eq('id', id)
+          .select();
+
+        if (updateError) {
+          console.error('❌ [DEBUG] Update error:', updateError);
+          throw new Error(`Failed to update product: ${updateError.message}`);
+        }
+
+        if (!updatedData || updatedData.length === 0) {
+          throw new Error('No product was updated');
+        }
+
+        console.log('✅ [DEBUG] Product updated successfully:', updatedData[0]);
+        return updatedData[0];
+      } else {
+        // Use normal seller service for sellers
+        return SellerProductService.updateProduct(id, data);
+      }
+    },
     onSuccess: () => {
       // Clear any previous errors
       setSubmitError('');
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['seller-products'] });
-      queryClient.invalidateQueries({ queryKey: ['seller-product', id] });
+      if (role === 'admin') {
+        queryClient.invalidateQueries({ queryKey: ['admin-product', id] });
+        queryClient.invalidateQueries({ queryKey: ['products'] }); // Admin dashboard shows all products
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['seller-products'] });
+        queryClient.invalidateQueries({ queryKey: ['seller-product', id] });
+      }
       queryClient.invalidateQueries({ queryKey: ['products'] }); // Also invalidate general products for buyers
-      navigate('/seller/products', { 
-        state: { message: 'Product updated successfully!', type: 'success' }
-      });
+      
+      // Navigate based on role
+      if (role === 'admin') {
+        navigate('/dashboard', { 
+          state: { message: 'Product updated successfully!', type: 'success' }
+        });
+      } else {
+        navigate('/seller/products', { 
+          state: { message: 'Product updated successfully!', type: 'success' }
+        });
+      }
     },
     onError: (error: Error) => {
       console.error('Failed to update product:', error);
@@ -417,7 +487,7 @@ export function EditProductPage() {
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/seller/products')}
+              onClick={() => role === 'admin' ? navigate('/dashboard') : navigate('/seller/products')}
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel

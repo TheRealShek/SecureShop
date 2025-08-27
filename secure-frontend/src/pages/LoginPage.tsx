@@ -1,7 +1,7 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LockClosedIcon, EnvelopeIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, EnvelopeIcon} from '@heroicons/react/24/outline';
 import { getRoleBasedRedirect } from '../utils/roleUtils';
 import type { UserRole } from '../utils/roleUtils';
 

@@ -102,28 +102,63 @@ export const getRoleBasedRedirect = (role: UserRole | null): string | null => {
 
 /**
  * Check if user has required role for a route
+ * UPDATED: Admin users are now restricted to /dashboard only
  */
 export const hasRequiredRole = (userRole: UserRole | null, requiredRole: UserRole): boolean => {
   if (!userRole) return false;
   
-  // Admin has access to everything
-  if (userRole === 'admin') return true;
+  // SPECIAL CASE: Admin can only access /dashboard
+  // This prevents admins from accessing buyer/seller routes
+  if (userRole === 'admin') {
+    return requiredRole === 'admin';
+  }
   
-  // Otherwise, exact role match required
+  // For non-admin users: exact role match required
   return userRole === requiredRole;
 };
 
 /**
  * Get allowed roles for specific routes
+ * UPDATED: Admin restricted to dashboard only
  */
 export const getRoutePermissions = (): Record<string, UserRole[]> => {
   return {
     '/dashboard': ['admin'],
-    '/manage-products': ['seller', 'admin'],
-    '/products': ['buyer', 'seller', 'admin'],
-    '/cart': ['buyer', 'admin'],
-    '/profile': ['buyer', 'seller', 'admin'], // All authenticated users
+    '/admin/products': ['admin'], // Admin product management routes
+    '/manage-products': ['seller'], // Removed admin - admin uses dashboard instead
+    '/products': ['buyer', 'seller'], // Removed admin - admin uses dashboard instead
+    '/cart': ['buyer'], // Removed admin - admin doesn't need cart
+    '/orders': ['buyer'], // Admin doesn't need orders
+    '/seller/dashboard': ['seller'],
+    '/seller/products': ['seller'],
+    '/seller/orders': ['seller'],
+    '/profile': ['buyer', 'seller', 'admin'], // All authenticated users can access profile
   };
+};
+
+/**
+ * Check if admin user should be redirected to dashboard
+ * Returns true if admin is trying to access routes other than dashboard
+ */
+export const shouldRedirectAdminToDashboard = (userRole: UserRole | null, currentPath: string): boolean => {
+  if (userRole !== 'admin') return false;
+  
+  // Allow admin to access dashboard, profile, and admin-specific routes
+  const allowedAdminPaths = ['/dashboard', '/profile', '/admin/'];
+  
+  // Check if current path starts with any allowed path
+  return !allowedAdminPaths.some(allowedPath => currentPath.startsWith(allowedPath));
+};
+
+/**
+ * Get redirect path for role-based access control
+ * For admins trying to access non-dashboard routes, redirect to dashboard
+ */
+export const getAccessControlRedirect = (userRole: UserRole | null, currentPath: string): string | null => {
+  if (shouldRedirectAdminToDashboard(userRole, currentPath)) {
+    return '/dashboard';
+  }
+  return null;
 };
 
 /**

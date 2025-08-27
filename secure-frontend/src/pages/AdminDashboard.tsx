@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../hooks';
 import { supabase } from '../services/supabase';
-import { formatPrice } from '../utils/currency';
 import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   PencilIcon,
   TrashIcon,
+  PlusIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
@@ -190,6 +190,15 @@ export function DashboardPage() {
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
+
+            {/* Add Product Button */}
+            <button
+              onClick={() => navigate('/admin/products/add')}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              <PlusIcon className="h-4 w-4" />
+              <span>Add Product</span>
+            </button>
           </div>
 
           {/* Results Count */}
@@ -244,7 +253,7 @@ export function DashboardPage() {
                           
                           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
                             <span className="font-medium text-green-600">
-                              {formatPrice(product.price)}
+                              ${product.price.toFixed(2)}
                             </span>
                             <span>
                               Stock: {product.stock || 0}

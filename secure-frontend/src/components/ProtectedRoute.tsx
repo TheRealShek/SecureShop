@@ -1,6 +1,11 @@
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { hasRequiredRole, getRoleBasedRedirect, type UserRole } from '../utils/roleUtils';
+import { 
+  hasRequiredRole, 
+  getRoleBasedRedirect, 
+  getAccessControlRedirect,
+  type UserRole 
+} from '../utils/roleUtils';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -54,13 +59,20 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
 
   console.log('✅ ProtectedRoute: All checks passed, proceeding with access control');
 
+  // ADMIN RESTRICTION: Check if admin is trying to access non-dashboard routes
+  const adminRedirect = getAccessControlRedirect(role, location.pathname);
+  if (adminRedirect) {
+    console.log('🔒 Admin trying to access restricted route, redirecting to dashboard');
+    return <Navigate to={adminRedirect} replace />;
+  }
+
   // Check role-based access
   let hasAccess = true;
   let denialReason = '';
 
   if (allowedRoles && allowedRoles.length > 0) {
     // Use allowedRoles array (preferred method)
-    hasAccess = allowedRoles.includes(role) || role === 'admin'; // Admin always has access
+    hasAccess = allowedRoles.includes(role);
     if (!hasAccess) {
       denialReason = `This page requires one of the following roles: ${allowedRoles.join(', ')}. Your current role is: ${role}.`;
     }

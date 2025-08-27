@@ -71,21 +71,31 @@ function App() {
               } 
             />
             
-            {/* Seller Management - only seller and admin */}
+            {/* Admin Product Edit - only admin */}
+            <Route 
+              path="/admin/products/:id/edit" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <EditProductPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Seller Management - only seller */}
             <Route 
               path="/manage-products" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <ManageProductsPage />
                 </ProtectedRoute>
               } 
             />
             
-            {/* Seller Dashboard Routes - only seller and admin */}
+            {/* Seller Dashboard Routes - only seller */}
             <Route 
               path="/seller/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <SellerDashboardPage />
                 </ProtectedRoute>
               } 
@@ -94,7 +104,7 @@ function App() {
             <Route 
               path="/seller/products" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <SellerProductsPage />
                 </ProtectedRoute>
               } 
@@ -103,7 +113,7 @@ function App() {
             <Route 
               path="/seller/products/add" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <AddProductPage />
                 </ProtectedRoute>
               } 
@@ -112,7 +122,7 @@ function App() {
             <Route 
               path="/seller/products/:id/edit" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <EditProductPage />
                 </ProtectedRoute>
               } 
@@ -121,7 +131,7 @@ function App() {
             <Route 
               path="/seller/orders" 
               element={
-                <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['seller']}>
                   <SellerOrdersPage />
                 </ProtectedRoute>
               } 
@@ -129,51 +139,51 @@ function App() {
             
             {/* Routes with Layout wrapper */}
             <Route element={<Layout />}>
-              {/* Products - all authenticated users */}
+              {/* Products - only buyers and sellers (admin uses dashboard) */}
               <Route 
                 path="/products" 
                 element={
-                  <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                  <ProtectedRoute allowedRoles={['buyer', 'seller']}>
                     <ProductsPage />
                   </ProtectedRoute>
                 } 
               />
               
-              {/* Product Details - all authenticated users */}
+              {/* Product Details - only buyers and sellers (admin uses dashboard) */}
               <Route 
                 path="/products/:id" 
                 element={
-                  <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                  <ProtectedRoute allowedRoles={['buyer', 'seller']}>
                     <ProductDetailsPage />
                   </ProtectedRoute>
                 } 
               />
               
-              {/* Cart - only buyers and admin */}
+              {/* Cart - only buyers */}
               <Route 
                 path="/cart" 
                 element={
-                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                  <ProtectedRoute allowedRoles={['buyer']}>
                     <CartPage />
                   </ProtectedRoute>
                 } 
               />
               
-              {/* Orders - only buyers and admin */}
+              {/* Orders - only buyers */}
               <Route 
                 path="/orders" 
                 element={
-                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                  <ProtectedRoute allowedRoles={['buyer']}>
                     <OrdersPage />
                   </ProtectedRoute>
                 } 
               />
               
-              {/* Order Details - only buyers and admin */}
+              {/* Order Details - only buyers */}
               <Route 
                 path="/orders/:orderId" 
                 element={
-                  <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+                  <ProtectedRoute allowedRoles={['buyer']}>
                     <OrderDetailsPage />
                   </ProtectedRoute>
                 } 
@@ -184,7 +194,7 @@ function App() {
             <Route 
               path="*" 
               element={
-                <ProtectedRoute allowedRoles={['buyer', 'seller', 'admin']}>
+                <ProtectedRoute allowedRoles={['buyer', 'seller']}>
                   <NotFoundPage />
                 </ProtectedRoute>
               } 
