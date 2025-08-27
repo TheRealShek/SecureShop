@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ProductCard } from './ProductCard';
 import { Product } from '../types';
 
@@ -17,7 +18,7 @@ interface ProductGridProps {
   onQuickView?: (product: Product) => void;
 }
 
-export function ProductGrid({
+export const ProductGrid = memo(function ProductGrid({
   products,
   onAddToCart,
   loading = false,
@@ -110,6 +111,4 @@ export function ProductGrid({
       </div>
     </div>
   );
-}
-
-export default ProductGrid;
+});

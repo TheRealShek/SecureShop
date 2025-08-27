@@ -90,152 +90,154 @@ export function AddProductPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900">Add New Product</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Create a new product for your store
-          </p>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="bg-white shadow-lg rounded-xl border border-slate-200 animate-fade-in">
+          <div className="px-8 py-6 border-b border-slate-200">
+            <h1 className="text-3xl font-bold text-slate-900">Add New Product</h1>
+            <p className="mt-2 text-lg text-slate-600">
+              Create a new product for your store
+            </p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
+            {/* Product Name */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
+                Product Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
+                  errors.name ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 focus:bg-white'
+                }`}
+                placeholder="Enter product name"
+              />
+              {errors.name && <p className="mt-2 text-sm text-red-600 font-medium">{errors.name}</p>}
+            </div>
+
+            {/* Product Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-semibold text-slate-700 mb-2">
+                Description *
+              </label>
+              <textarea
+                id="description"
+                rows={4}
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
+                  errors.description ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 focus:bg-white'
+                }`}
+                placeholder="Enter product description"
+              />
+              {errors.description && <p className="mt-2 text-sm text-red-600 font-medium">{errors.description}</p>}
+            </div>
+
+            {/* Product Price */}
+            <div>
+              <label htmlFor="price" className="block text-sm font-semibold text-slate-700 mb-2">
+                Price (₹) *
+              </label>
+              <input
+                type="number"
+                id="price"
+                min="0"
+                step="0.01"
+                value={formData.price || ''}
+                onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
+                  errors.price ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 focus:bg-white'
+                }`}
+                placeholder="0.00"
+              />
+              {errors.price && <p className="mt-2 text-sm text-red-600 font-medium">{errors.price}</p>}
+            </div>
+
+            {/* Product Stock */}
+            <div>
+              <label htmlFor="stock" className="block text-sm font-semibold text-slate-700 mb-2">
+                Stock Quantity *
+              </label>
+              <input
+                type="number"
+                id="stock"
+                min="0"
+                step="1"
+                value={formData.stock || ''}
+                onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
+                className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
+                  errors.stock ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 focus:bg-white'
+                }`}
+                placeholder="Enter stock quantity"
+              />
+              {errors.stock && <p className="mt-2 text-sm text-red-600 font-medium">{errors.stock}</p>}
+              <p className="mt-2 text-sm text-slate-500">
+                Number of units available for sale
+              </p>
+            </div>
+
+            {/* Product Image URL */}
+            <div>
+              <label htmlFor="image" className="block text-sm font-semibold text-slate-700 mb-2">
+                Image URL (Optional)
+              </label>
+              <input
+                type="url"
+                id="image"
+                value={formData.image}
+                onChange={(e) => handleInputChange('image', e.target.value)}
+                className={`block w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
+                  errors.image ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 focus:bg-white'
+                }`}
+                placeholder="https://example.com/image.jpg (optional)"
+              />
+              {errors.image && <p className="mt-2 text-sm text-red-600 font-medium">{errors.image}</p>}
+              
+              {/* Help text for optional image */}
+              <p className="mt-2 text-sm text-slate-500">
+                Leave empty to use a default product image
+              </p>
+              
+              {/* Image Preview */}
+              {formData.image && (
+                <div className="mt-4">
+                  <p className="text-sm text-slate-600 mb-2 font-medium">Preview:</p>
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="h-32 w-32 object-cover rounded-lg border border-slate-200 shadow-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex justify-end space-x-4 pt-8 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => navigate('/seller/products')}
+                className="px-6 py-3 border border-slate-300 rounded-lg shadow-sm text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={createProductMutation.isPending}
+                className="px-6 py-3 border border-transparent rounded-lg shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
+              >
+                {createProductMutation.isPending ? 'Creating...' : 'Create Product'}
+              </button>
+            </div>
+          </form>
         </div>
-        
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
-          {/* Product Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Product Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.name ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Enter product name"
-            />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-          </div>
-
-          {/* Product Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description *
-            </label>
-            <textarea
-              id="description"
-              rows={4}
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.description ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Enter product description"
-            />
-            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
-          </div>
-
-          {/* Product Price */}
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price (₹) *
-            </label>
-            <input
-              type="number"
-              id="price"
-              min="0"
-              step="0.01"
-              value={formData.price || ''}
-              onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.price ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="0.00"
-            />
-            {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
-          </div>
-
-          {/* Product Stock */}
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
-              Stock Quantity *
-            </label>
-            <input
-              type="number"
-              id="stock"
-              min="0"
-              step="1"
-              value={formData.stock || ''}
-              onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.stock ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Enter stock quantity"
-            />
-            {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock}</p>}
-            <p className="mt-1 text-sm text-gray-500">
-              Number of units available for sale
-            </p>
-          </div>
-
-          {/* Product Image URL */}
-          <div>
-            <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-              Image URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="image"
-              value={formData.image}
-              onChange={(e) => handleInputChange('image', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.image ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="https://example.com/image.jpg (optional)"
-            />
-            {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
-            
-            {/* Help text for optional image */}
-            <p className="mt-1 text-sm text-gray-500">
-              Leave empty to use a default product image
-            </p>
-            
-            {/* Image Preview */}
-            {formData.image && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  className="h-32 w-32 object-cover rounded-md border border-gray-200"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => navigate('/seller/products')}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createProductMutation.isPending}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {createProductMutation.isPending ? 'Creating...' : 'Create Product'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

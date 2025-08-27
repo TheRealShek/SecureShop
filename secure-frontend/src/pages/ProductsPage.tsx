@@ -1,17 +1,28 @@
-import { useState, useMemo } from 'react';
-import { usePaginatedProducts, useSortedProducts } from '../hooks';
+import { useState, useMemo, Suspense, lazy } from 'react';
+import { usePaginatedProducts, useSortedProducts, useDebounce } from '../hooks';
 import { useCart } from '../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ProductGrid } from '../components/ProductGrid';
 import { ProductSort } from '../components/ProductSort';
-import { QuickViewModal } from '../components/QuickViewModal';
-import { EditProductModal } from '../components/EditProductModal';
-import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+// Lazy load modals for better performance
+const QuickViewModal = lazy(() => import('../components/QuickViewModal').then(module => ({ default: module.QuickViewModal })));
+const EditProductModal = lazy(() => import('../components/EditProductModal').then(module => ({ default: module.EditProductModal })));
+const DeleteConfirmModal = lazy(() => import('../components/DeleteConfirmModal').then(module => ({ default: module.DeleteConfirmModal })));
 import { useAuth } from '../contexts/AuthContext';
 import { SortOption } from '../hooks/useSortedProducts';
 import { Product } from '../types';
 import { SellerProductService } from '../services/api';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+
+// Modal loading spinner
+const ModalLoadingSpinner = () => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl p-8 shadow-xl">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+      <p className="mt-4 text-slate-700 text-sm">Loading...</p>
+    </div>
+  </div>
+);
 
 export function ProductsPage() {
   const { user } = useAuth();
@@ -21,6 +32,9 @@ export function ProductsPage() {
   
   // Filter and search states
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Debounce search term to reduce unnecessary filtering (300ms delay)
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   // Modal states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -41,20 +55,20 @@ export function ProductsPage() {
   // Apply sorting to the products
   const sortedProducts = useSortedProducts(products, sortBy);
 
-  // Filter products based on search term only
+  // Filter products based on debounced search term
   const filteredProducts = useMemo(() => {
     let filtered = sortedProducts;
 
-    // Filter by search term
-    if (searchTerm.trim()) {
+    // Filter by search term (using debounced value)
+    if (debouncedSearchTerm.trim()) {
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
 
     return filtered;
-  }, [sortedProducts, searchTerm]);
+  }, [sortedProducts, debouncedSearchTerm]); // Use debouncedSearchTerm in dependency
 
   // Update product mutation
   const updateProductMutation = useMutation({
@@ -249,30 +263,42 @@ export function ProductsPage() {
       </div>
 
       {/* Quick View Modal */}
-      <QuickViewModal
-        product={quickViewProduct}
-        isOpen={!!quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-        onAddToCart={isBuyer ? handleAddToCart : undefined}
-      />
+      {quickViewProduct && (
+        <Suspense fallback={<ModalLoadingSpinner />}>
+          <QuickViewModal
+            product={quickViewProduct}
+            isOpen={!!quickViewProduct}
+            onClose={() => setQuickViewProduct(null)}
+            onAddToCart={isBuyer ? handleAddToCart : undefined}
+          />
+        </Suspense>
+      )}
 
       {/* Edit Product Modal */}
-      <EditProductModal
-        product={editingProduct}
-        isOpen={!!editingProduct}
-        onClose={() => setEditingProduct(null)}
-        onSave={handleSaveProduct}
-        isLoading={updateProductMutation.isPending}
-      />
+      {editingProduct && (
+        <Suspense fallback={<ModalLoadingSpinner />}>
+          <EditProductModal
+            product={editingProduct}
+            isOpen={!!editingProduct}
+            onClose={() => setEditingProduct(null)}
+            onSave={handleSaveProduct}
+            isLoading={updateProductMutation.isPending}
+          />
+        </Suspense>
+      )}
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={!!deletingProduct}
-        productName={deletingProduct?.name || ''}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeletingProduct(null)}
-        isDeleting={deleteProductMutation.isPending}
-      />
+      {deletingProduct && (
+        <Suspense fallback={<ModalLoadingSpinner />}>
+          <DeleteConfirmModal
+            isOpen={!!deletingProduct}
+            productName={deletingProduct?.name || ''}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setDeletingProduct(null)}
+            isDeleting={deleteProductMutation.isPending}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

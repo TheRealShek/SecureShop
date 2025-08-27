@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ShoppingCartIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Product } from '../types';
 import { DEFAULT_PRODUCT_VALUES, getProductImageUrl } from '../utils/typeGuards';
@@ -19,7 +19,7 @@ interface ProductCardProps {
   onQuickView?: (product: Product) => void;
 }
 
-export function ProductCard({ 
+const ProductCard = memo(function ProductCard({ 
   product, 
   onAddToCart,
   onEdit,
@@ -159,6 +159,6 @@ export function ProductCard({
       </div>
     </div>
   );
-}
+});
 
-export default ProductCard;
+export { ProductCard };

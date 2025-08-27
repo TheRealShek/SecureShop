@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
@@ -6,22 +7,36 @@ import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RootRedirect } from './components/RootRedirect';
-import { LoginPage } from './pages/LoginPage';
-import { ProductsPage } from './pages/ProductsPage';
-import { ProductDetailsPage } from './pages/ProductDetailsPage';
-import { CartPage } from './pages/CartPage';
-import { OrdersPage } from './pages/OrdersPage';
-import { OrderDetailsPage } from './pages/OrderDetailsPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { ManageProductsPage } from './pages/ManageProductsPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { NotAuthorizedPage } from './pages/NotAuthorizedPage';
+
+// Lazy load large pages for better performance
+const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })));
+const ProductsPage = lazy(() => import('./pages/ProductsPage').then(module => ({ default: module.ProductsPage })));
+const ProductDetailsPage = lazy(() => import('./pages/ProductDetailsPage').then(module => ({ default: module.ProductDetailsPage })));
+const CartPage = lazy(() => import('./pages/CartPage').then(module => ({ default: module.CartPage })));
+const OrdersPage = lazy(() => import('./pages/OrdersPage').then(module => ({ default: module.OrdersPage })));
+const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage').then(module => ({ default: module.OrderDetailsPage })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(module => ({ default: module.DashboardPage })));
+const ManageProductsPage = lazy(() => import('./pages/ManageProductsPage').then(module => ({ default: module.ManageProductsPage })));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
+const NotAuthorizedPage = lazy(() => import('./pages/NotAuthorizedPage').then(module => ({ default: module.NotAuthorizedPage })));
 // Seller pages
-import { SellerDashboardPage } from './pages/SellerDashboardPage';
-import { SellerProductsPage } from './pages/SellerProductsPage';
-import { AddProductPage } from './pages/AddProductPage';
-import { EditProductPage } from './pages/EditProductPage';
-import { SellerOrdersPage } from './pages/SellerOrdersPage';
+const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage').then(module => ({ default: module.SellerDashboardPage })));
+const SellerProductsPage = lazy(() => import('./pages/SellerProductsPage').then(module => ({ default: module.SellerProductsPage })));
+const AddProductPage = lazy(() => import('./pages/AddProductPage').then(module => ({ default: module.AddProductPage })));
+const EditProductPage = lazy(() => import('./pages/EditProductPage').then(module => ({ default: module.EditProductPage })));
+const SellerOrdersPage = lazy(() => import('./pages/SellerOrdersPage').then(module => ({ default: module.SellerOrdersPage })));
+
+// Loading component for Suspense fallback
+const PageLoadingSpinner = () => (
+  <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="text-center px-4 py-16 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-6"></div>
+        <p className="text-slate-700 text-lg font-semibold">Loading page...</p>
+      </div>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,20 +69,21 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
-            <Routes>
-              {/* Root route: redirect based on auth status and role */}
-              <Route path="/" element={<RootRedirect />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/not-authorized" element={<NotAuthorizedPage />} />
-            
-            {/* Role-based protected routes */}
-            {/* Admin Dashboard - only admin */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <DashboardPage />
-                </ProtectedRoute>
+            <Suspense fallback={<PageLoadingSpinner />}>
+              <Routes>
+                {/* Root route: redirect based on auth status and role */}
+                <Route path="/" element={<RootRedirect />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/not-authorized" element={<NotAuthorizedPage />} />
+              
+              {/* Role-based protected routes */}
+              {/* Admin Dashboard - only admin */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <DashboardPage />
+                  </ProtectedRoute>
               } 
             />
             
@@ -200,6 +216,7 @@ function App() {
               } 
             />
             </Routes>
+            </Suspense>
           </ToastProvider>
         </CartProvider>
       </AuthProvider>

@@ -33,15 +33,15 @@ const getStatusColor = (status: string) => {
     case 'pending':
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     case 'confirmed':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-indigo-100 text-indigo-800 border-indigo-200';
     case 'shipped':
       return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'delivered':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     case 'cancelled':
       return 'bg-red-100 text-red-800 border-red-200';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-slate-100 text-slate-800 border-slate-200';
   }
 };
 
@@ -63,16 +63,11 @@ export function OrderDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="bg-white rounded-lg border p-6">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center px-4 py-16 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-6"></div>
+            <p className="text-slate-700 text-lg font-semibold">Loading order details...</p>
           </div>
         </div>
       </div>

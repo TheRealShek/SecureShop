@@ -72,72 +72,82 @@ export function SellerProductsPage() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">Failed to load products</div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center px-4 py-16 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+            <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+              <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Failed to load products</h2>
+            <p className="text-slate-600">Please try again or contact support if the problem persists.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Toast notifications */}
-      {toast && (
-        <div className={`fixed top-4 right-4 max-w-sm w-full z-50 p-4 rounded-md shadow-lg ${
-          toast.type === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
-        }`}>
-          <div className="flex items-center">
-            <div className="flex-1">
-              <p className="text-sm font-medium">{toast.message}</p>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Toast notifications */}
+        {toast && (
+          <div className={`fixed top-4 right-4 max-w-sm w-full z-50 p-4 rounded-xl shadow-lg transition-all duration-300 animate-slide-up ${
+            toast.type === 'success' 
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center">
+              <div className="flex-1">
+                <p className="text-sm font-semibold">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="ml-4 text-slate-400 hover:text-slate-600 transition-colors duration-200"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setToast(null)}
-              className="ml-4 text-gray-400 hover:text-gray-600"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
           </div>
-        </div>
-      )}
-      
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+        )}
+        
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 animate-fade-in">
+          <div className="p-8 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl">
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900">My Products</h1>
+                    <p className="mt-2 text-lg text-slate-600">
+                      Manage your product catalog • {products.length} product{products.length !== 1 ? 's' : ''} total
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  Manage your product catalog • {products.length} product{products.length !== 1 ? 's' : ''} total
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 sm:mt-0 sm:ml-16 sm:flex-none space-y-3 sm:space-y-0 sm:space-x-3 flex flex-col sm:flex-row sm:items-center">
-            {/* Sort Dropdown */}
-            {products.length > 0 && (
-              <div className="flex items-center space-x-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 shadow-sm">
-                <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                </svg>
-                <label htmlFor="sort-select" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                  Sort by:
-                </label>
-                <select
-                  id="sort-select"
-                  value={sortBy}
+              <div className="mt-6 sm:mt-0 sm:ml-16 sm:flex-none space-y-3 sm:space-y-0 sm:space-x-3 flex flex-col sm:flex-row sm:items-center">
+                {/* Sort Dropdown */}
+                {products.length > 0 && (
+                  <div className="flex items-center space-x-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+                    <svg className="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    <label htmlFor="sort-select" className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+                      Sort by:
+                    </label>
+                    <select
+                      id="sort-select"
+                      value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="border-0 bg-transparent text-sm font-medium text-gray-900 focus:outline-none focus:ring-0 cursor-pointer min-w-[140px]"
                 >
@@ -154,18 +164,18 @@ export function SellerProductsPage() {
             
             <Link
               to="/seller/dashboard"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
             >
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               Dashboard
             </Link>
             <Link
               to="/seller/products/add"
-              className="inline-flex items-center justify-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+              className="inline-flex items-center justify-center rounded-xl border border-transparent bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 hover:shadow-xl"
             >
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Add Product
@@ -175,10 +185,10 @@ export function SellerProductsPage() {
       </div>
 
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+        <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-slate-200 animate-fade-in">
+          <div className="mx-auto w-24 h-24 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-6">
             <svg
-              className="w-12 h-12 text-gray-400"
+              className="w-12 h-12 text-indigo-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -303,5 +313,7 @@ export function SellerProductsPage() {
         </div>
       )}
     </div>
+  </div>
+</div>
   );
 }

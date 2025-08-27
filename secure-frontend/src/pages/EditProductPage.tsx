@@ -264,11 +264,13 @@ export function EditProductPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading product data from Supabase...</p>
-          <p className="mt-2 text-sm text-gray-500">Product ID: {id}</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center px-4 py-16 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-6"></div>
+            <p className="text-slate-700 text-lg font-semibold mb-2">Loading product data...</p>
+            <p className="text-slate-500 text-sm">Product ID: {id}</p>
+          </div>
         </div>
       </div>
     );
@@ -276,9 +278,23 @@ export function EditProductPage() {
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">Failed to load product</div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center px-4 py-16 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+            <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+              <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Failed to load product</h2>
+            <p className="text-slate-600 mb-6">Please try again or contact support if the problem persists.</p>
+            <button
+              onClick={() => navigate('/seller/products')}
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              Back to Products
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -286,28 +302,43 @@ export function EditProductPage() {
 
   if (!product) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="text-center">
-          <p className="text-gray-600">Product not found</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center px-4 py-16 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 max-w-md mx-auto">
+            <div className="mx-auto h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+              <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1H7a1 1 0 00-1 1v1m8 0V4.5" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Product not found</h2>
+            <p className="text-slate-600 mb-6">The product you're trying to edit doesn't exist.</p>
+            <button
+              onClick={() => navigate('/seller/products')}
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              Back to Products
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Edit Product</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Update your product information via Supabase
-              </p>
-            </div>
-            {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs bg-gray-100 px-2 py-1 rounded">
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow-xl rounded-2xl border border-slate-200 animate-fade-in">
+          <div className="px-8 py-6 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">Edit Product</h1>
+                <p className="mt-2 text-lg text-slate-600">
+                  Update your product information
+                </p>
+              </div>
+              {/* Debug info - remove in production */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs bg-white/60 px-3 py-2 rounded-lg border border-slate-200">
                 <span className="text-gray-500">ID: {id}</span>
                 {product && (
                   <span className="ml-2 text-green-600">✓ Loaded from Supabase</span>
@@ -317,18 +348,18 @@ export function EditProductPage() {
           </div>
         </div>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
+        <form onSubmit={handleSubmit} className="px-8 py-6 space-y-8">
           {/* Error Message */}
           {submitError && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-xl bg-red-50 p-6 border border-red-200 animate-shake">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error updating product</h3>
+                  <h3 className="text-base font-semibold text-red-800">Error updating product</h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>{submitError}</p>
                   </div>
@@ -339,17 +370,17 @@ export function EditProductPage() {
 
           {/* Success indicator when updating */}
           {updateProductMutation.isPending && (
-            <div className="rounded-md bg-blue-50 p-4">
+            <div className="rounded-xl bg-indigo-50 p-6 border border-indigo-200">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Updating product via Supabase...</h3>
-                  <div className="mt-2 text-sm text-blue-700">
+                  <h3 className="text-base font-semibold text-indigo-800">Updating product...</h3>
+                  <div className="mt-2 text-sm text-indigo-700">
                     <p>Please wait while we save your changes.</p>
                   </div>
                 </div>
@@ -357,8 +388,8 @@ export function EditProductPage() {
             </div>
           )}
           {/* Product Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-semibold text-slate-900">
               Product Name *
             </label>
             <input
@@ -366,17 +397,17 @@ export function EditProductPage() {
               id="name"
               value={formData.name || product?.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.name ? 'border-red-300' : 'border-gray-300'
+              className={`block w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-all duration-200 ${
+                errors.name ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white hover:border-slate-400'
               }`}
               placeholder="Enter product name"
             />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+            {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name}</p>}
           </div>
 
           {/* Product Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label htmlFor="description" className="block text-sm font-semibold text-slate-900">
               Description *
             </label>
             <textarea
@@ -384,17 +415,17 @@ export function EditProductPage() {
               rows={4}
               value={formData.description || product?.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.description ? 'border-red-300' : 'border-gray-300'
+              className={`block w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base transition-all duration-200 resize-none ${
+                errors.description ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white hover:border-slate-400'
               }`}
-              placeholder="Enter product description"
+              placeholder="Describe your product in detail..."
             />
-            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+            {errors.description && <p className="mt-2 text-sm text-red-600">{errors.description}</p>}
           </div>
 
           {/* Product Price */}
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label htmlFor="price" className="block text-sm font-semibold text-slate-900">
               Price (₹) *
             </label>
             <input
@@ -484,26 +515,26 @@ export function EditProductPage() {
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-4 pt-8 border-t border-slate-200">
             <button
               type="button"
               onClick={() => role === 'admin' ? navigate('/dashboard') : navigate('/seller/products')}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-6 py-3 border border-slate-300 rounded-xl shadow-sm text-base font-semibold text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={updateProductMutation.isPending || !id}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-6 py-3 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-all duration-200 transform hover:scale-105 hover:shadow-xl"
             >
               {updateProductMutation.isPending ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Updating via Supabase...
+                  Updating Product...
                 </>
               ) : (
                 'Update Product'
@@ -513,5 +544,6 @@ export function EditProductPage() {
         </form>
       </div>
     </div>
+  </div>
   );
 }
