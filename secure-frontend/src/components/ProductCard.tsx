@@ -55,44 +55,44 @@ export function ProductCard({
 
   return (
     <div 
-      className="group relative bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 h-full flex flex-col overflow-hidden"
+      className="group relative bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-all duration-300 h-full flex flex-col overflow-hidden hover:border-slate-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image - Simplified */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      {/* Product Image */}
+      <div className="relative aspect-square overflow-hidden bg-slate-100">
         {isImageLoading && !imageError && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-pulse bg-gray-300 rounded-full h-6 w-6"></div>
+            <div className="animate-pulse bg-slate-300 rounded-full h-8 w-8"></div>
           </div>
         )}
         <img
           src={imageError ? DEFAULT_PRODUCT_VALUES.PLACEHOLDER_IMAGE : imageUrl}
           alt={product.name}
-          className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+          className={`h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
             isImageLoading ? 'opacity-0' : 'opacity-100'
           }`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
         
-        {/* Stock Badge - Only when out of stock */}
+        {/* Stock Badge */}
         {product.inStock === false && (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-medium rounded">
+          <div className="absolute top-3 left-3 px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-full shadow-sm">
             Out of Stock
           </div>
         )}
 
-        {/* Simple Hover Actions */}
-        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${
+        {/* Hover Actions */}
+        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${
           isHovered ? 'opacity-100' : 'opacity-0'
         }`}>
           <div className="flex flex-col items-center gap-3">
-            {/* Info Button - Always show for buyers */}
+            {/* View Details Button */}
             {!showSellerActions && onQuickView && (
               <button
                 onClick={() => onQuickView(product)}
-                className="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-medium text-sm hover:bg-white hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
+                className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2.5 rounded-full font-medium text-sm hover:bg-white hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
                 title="View product details"
               >
                 <InformationCircleIcon className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function ProductCard({
             {!showSellerActions && onAddToCart && product.inStock !== false && (
               <button
                 onClick={handleAddToCart}
-                className="bg-gray-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-800 hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
+                className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-indigo-700 hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg"
               >
                 <ShoppingCartIcon className="h-4 w-4" />
                 Add to Cart
@@ -114,43 +114,43 @@ export function ProductCard({
         </div>
       </div>
 
-      {/* Product Info - Simplified */}
-      <div className="p-4 flex-1 flex flex-col">
+      {/* Product Info */}
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex-1">
-          <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2 leading-tight">
             {product.name}
           </h3>
           {product.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+            <p className="text-sm text-slate-600 line-clamp-2 mb-3 leading-relaxed">
               {product.description}
             </p>
           )}
         </div>
         
-        {/* Price and Stock - Clean Layout */}
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-gray-900">
+        {/* Price and Stock */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xl font-bold text-slate-900">
             {formatPrice(product.price)}
           </span>
           {product.inStock !== false && (
-            <span className="text-xs text-green-600 font-medium">
+            <span className="text-xs text-emerald-600 font-semibold px-2 py-1 bg-emerald-50 rounded-full">
               In Stock
             </span>
           )}
         </div>
         
-        {/* Seller Actions - Simplified */}
+        {/* Seller Actions */}
         {showSellerActions && (
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 pt-3 border-t border-slate-200">
             <button
               onClick={() => onEdit?.(product)}
-              className="flex-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="flex-1 px-3 py-2 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-medium rounded-lg transition-colors duration-200"
             >
               Edit
             </button>
             <button
               onClick={() => onDelete?.(product.id)}
-              className="flex-1 text-sm text-red-600 hover:text-red-700 font-medium"
+              className="flex-1 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 font-medium rounded-lg transition-colors duration-200"
             >
               Delete
             </button>

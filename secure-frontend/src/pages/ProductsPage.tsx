@@ -145,21 +145,21 @@ export function ProductsPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50">
       {/* Toast notifications */}
       {toast && (
-        <div className={`fixed top-4 right-4 max-w-sm w-full z-50 p-4 rounded-md shadow-lg ${
+        <div className={`fixed top-6 right-6 max-w-sm w-full z-50 p-4 rounded-xl shadow-lg border backdrop-blur-sm animate-slide-up ${
           toast.type === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
+            ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800' 
+            : 'bg-red-50/95 border-red-200 text-red-800'
         }`}>
           <div className="flex items-center">
             <div className="flex-1">
-              <p className="text-sm font-medium">{toast.message}</p>
+              <p className="text-sm font-semibold">{toast.message}</p>
             </div>
             <button
               onClick={() => setToast(null)}
-              className="ml-4 text-gray-400 hover:text-gray-600"
+              className="ml-4 text-slate-400 hover:text-slate-600 transition-colors duration-200"
             >
               <span className="sr-only">Close</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -170,80 +170,81 @@ export function ProductsPage() {
         </div>
       )}
 
-      <div className="bg-white min-h-screen">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          
-          {/* Simple Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Products
-            </h1>
-            <p className="text-gray-600">
-              Discover quality products from trusted sellers
-            </p>
-          </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        
+        {/* Header */}
+        <div className="text-center mb-10 animate-fade-in">
+          <h1 className="text-4xl font-bold text-slate-900 mb-3">
+            Products
+          </h1>
+          <p className="text-lg text-slate-600">
+            Discover quality products from trusted sellers
+          </p>
+        </div>
 
-          {/* Simple Search Bar */}
-          <div className="mb-6">
-            <div className="relative max-w-md mx-auto">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+        {/* Search and Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 animate-slide-up">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            {/* Search Bar */}
+            <div className="relative flex-1 max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
               </div>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-slate-50 focus:bg-white"
+              />
+            </div>
+            
+            {/* Sort Controls */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-slate-600">
+                {filteredProducts.length} products
+              </span>
+              <ProductSort 
+                sortBy={sortBy} 
+                onSortChange={setSortBy}
               />
             </div>
           </div>
+        </div>
 
-          {/* Simple Controls */}
-          <div className="mb-6 flex justify-between items-center">
-            <span className="text-sm text-gray-600">
-              {filteredProducts.length} products
-            </span>
-            <ProductSort 
-              sortBy={sortBy} 
-              onSortChange={setSortBy}
-            />
-          </div>
-
-          {/* Products Grid - Clean and Minimal */}
-          <div>
-            <ProductGrid
-              products={filteredProducts}
-              onAddToCart={isBuyer ? handleAddToCart : undefined}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
-              currentUserId={user?.id}
-              userRole={user?.role}
-              onToggleFavorite={undefined}
-              favorites={new Set()}
-              loading={false}
-              emptyMessage={
-                searchTerm 
-                  ? "No products found. Try different search terms."
-                  : "No products available"
-              }
-              gridColumns={4}
-              onQuickView={setQuickViewProduct}
-            />
-            
-            {/* Simple Load More */}
-            {hasMore && filteredProducts.length > 0 && (
-              <div className="text-center mt-8">
-                <button 
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {isLoadingMore ? 'Loading...' : `Load More (${remainingCount} remaining)`}
-                </button>
-              </div>
-            )}
-          </div>
+        {/* Products Grid */}
+        <div className="animate-fade-in">
+          <ProductGrid
+            products={filteredProducts}
+            onAddToCart={isBuyer ? handleAddToCart : undefined}
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
+            currentUserId={user?.id}
+            userRole={user?.role}
+            onToggleFavorite={undefined}
+            favorites={new Set()}
+            loading={false}
+            emptyMessage={
+              searchTerm 
+                ? "No products found. Try different search terms."
+                : "No products available"
+            }
+            gridColumns={4}
+            onQuickView={setQuickViewProduct}
+          />
+          
+          {/* Load More Button */}
+          {hasMore && filteredProducts.length > 0 && (
+            <div className="text-center mt-12">
+              <button 
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                className="px-8 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 transition-all duration-200 shadow-sm"
+              >
+                {isLoadingMore ? 'Loading...' : `Load More (${remainingCount} remaining)`}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
