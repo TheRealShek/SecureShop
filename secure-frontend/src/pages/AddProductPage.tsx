@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SellerProductService } from '../services/api';
+import { InputSanitizer } from '../utils/inputSanitization';
 
 interface ProductFormData {
   name: string;
@@ -83,7 +84,32 @@ export function AddProductPage() {
   };
 
   const handleInputChange = (field: keyof ProductFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    
+    // Apply appropriate sanitization based on field type
+    if (typeof value === 'string') {
+      switch (field) {
+        case 'name':
+          sanitizedValue = InputSanitizer.productName(value);
+          break;
+        case 'description':
+          sanitizedValue = InputSanitizer.productDescription(value);
+          break;
+        case 'image':
+          sanitizedValue = InputSanitizer.url(value);
+          break;
+        default:
+          sanitizedValue = InputSanitizer.general(value);
+      }
+    } else if (typeof value === 'number') {
+      if (field === 'price') {
+        sanitizedValue = InputSanitizer.price(value);
+      } else if (field === 'stock') {
+        sanitizedValue = InputSanitizer.quantity(value);
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }

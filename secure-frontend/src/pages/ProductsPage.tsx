@@ -13,6 +13,7 @@ import { SortOption } from '../hooks/useSortedProducts';
 import { Product } from '../types';
 import { SellerProductService } from '../services/api';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { InputSanitizer } from '../utils/inputSanitization';
 
 // Modal loading spinner
 const ModalLoadingSpinner = () => (
@@ -209,7 +210,7 @@ export function ProductsPage() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(InputSanitizer.searchQuery(e.target.value))}
                 placeholder="Search products..."
                 className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-slate-50 focus:bg-white"
               />

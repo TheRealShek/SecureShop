@@ -47,6 +47,20 @@ func AddToCart(c *gin.Context) {
 		return
 	}
 
+	// Sanitize product ID input
+	request.ProductID = utils.SanitizeInput(request.ProductID, utils.SanitizationOptions{
+		TrimWhitespace: true,
+		EscapeHTML:     true,
+		RemoveNewlines: true,
+		MaxLength:      100,
+	})
+
+	// Validate quantity is within reasonable bounds
+	if request.Quantity < 1 || request.Quantity > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be between 1 and 100"})
+		return
+	}
+
 	// Verify product exists and is available
 	product, err := database.GetProductByID(request.ProductID)
 	if err == sql.ErrNoRows {
@@ -92,12 +106,26 @@ func UpdateCartItem(c *gin.Context) {
 		return
 	}
 
+	// Sanitize cart item ID
+	cartItemID = utils.SanitizeInput(cartItemID, utils.SanitizationOptions{
+		TrimWhitespace: true,
+		EscapeHTML:     true,
+		RemoveNewlines: true,
+		MaxLength:      100,
+	})
+
 	var request struct {
 		Quantity int `json:"quantity" binding:"required,min=0"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate quantity is within reasonable bounds
+	if request.Quantity < 0 || request.Quantity > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be between 0 and 100"})
 		return
 	}
 
@@ -126,6 +154,14 @@ func RemoveCartItem(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cart item ID is required"})
 		return
 	}
+
+	// Sanitize cart item ID
+	cartItemID = utils.SanitizeInput(cartItemID, utils.SanitizationOptions{
+		TrimWhitespace: true,
+		EscapeHTML:     true,
+		RemoveNewlines: true,
+		MaxLength:      100,
+	})
 
 	err = database.RemoveFromCart(cartItemID, user.ID)
 	if err == sql.ErrNoRows {

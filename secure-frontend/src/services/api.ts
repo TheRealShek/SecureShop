@@ -2,6 +2,7 @@ import axios from 'axios';
 import { supabase } from './supabase';
 import { fetchUserRole } from '../utils/roleUtils';
 import { Product, CartItem, User, Order, OrderWithDetails } from '../types';
+import { InputSanitizer } from '../utils/inputSanitization';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -450,6 +451,13 @@ export const CartService = {
 
   addToCart: async (productId: string): Promise<CartItem> => {
     try {
+      // Sanitize the product ID input
+      const sanitizedProductId = InputSanitizer.general(productId);
+      
+      if (!sanitizedProductId) {
+        throw new Error('Invalid product ID');
+      }
+      
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -465,7 +473,7 @@ export const CartService = {
         .from('cart_items')
         .select('id, quantity')
         .eq('user_id', sessionData.session.user.id)
-        .eq('product_id', productId)
+        .eq('product_id', sanitizedProductId)
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -474,14 +482,14 @@ export const CartService = {
 
       if (existingItem) {
         // Update existing item quantity
-        return await CartService.updateCartItem(productId, existingItem.quantity + 1);
+        return await CartService.updateCartItem(sanitizedProductId, existingItem.quantity + 1);
       } else {
         // Create new cart item
         const { data, error } = await supabase
           .from('cart_items')
           .insert([{
             user_id: sessionData.session.user.id,
-            product_id: productId,
+            product_id: sanitizedProductId,
             quantity: 1
           }])
           .select(`
@@ -725,6 +733,15 @@ export const SellerProductService = {
   createProduct: async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
     console.log('[DEBUG] Creating product via Supabase directly:', productData);
     
+    // Sanitize all product inputs before sending to backend
+    const sanitizedProductData = {
+      name: InputSanitizer.productName(productData.name),
+      description: InputSanitizer.productDescription(productData.description),
+      price: InputSanitizer.price(productData.price),
+      stock: InputSanitizer.quantity(productData.stock || 0),
+      image: InputSanitizer.url(productData.image || ''),
+    };
+    
     try {
       // Get current authenticated user
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -741,12 +758,12 @@ export const SellerProductService = {
       const { data: insertedData, error: insertError } = await supabase
         .from('products')
         .insert({
-          name: productData.name,
-          description: productData.description,
-          price: productData.price,
-          image_url: productData.image,
+          name: sanitizedProductData.name,
+          description: sanitizedProductData.description,
+          price: sanitizedProductData.price,
+          image_url: sanitizedProductData.image,
           seller_id: sellerId,
-          stock: productData.stock || 0, // Use stock from form data
+          stock: sanitizedProductData.stock,
           rating: 5.0 // Default rating for new products
         })
         .select()

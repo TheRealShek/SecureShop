@@ -6,6 +6,7 @@ import (
 	"secure-backend/database"
 	"secure-backend/models"
 	"secure-backend/utils"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,6 +54,17 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	// Sanitize all user inputs
+	product.Name = utils.SanitizeProductName(product.Name)
+	product.Description = utils.SanitizeProductDescription(product.Description)
+	product.Image = utils.SanitizeInput(product.Image, utils.DefaultTextOptions)
+
+	// Validate that required fields are not empty after sanitization
+	if strings.TrimSpace(product.Name) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
+		return
+	}
+
 	// Set the seller ID from the authenticated user
 	product.SellerID = user.ID
 
@@ -70,9 +82,8 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	// Validate status
-	validStatuses := map[string]bool{"draft": true, "published": true, "archived": true}
-	if !validStatuses[product.Status] {
+	// Validate status using sanitization utility
+	if !utils.IsValidProductStatus(product.Status) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be draft, published, or archived"})
 		return
 	}
@@ -148,6 +159,29 @@ func UpdateProduct(c *gin.Context) {
 	var updateProduct models.Product
 	if err := c.ShouldBindJSON(&updateProduct); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product data"})
+		return
+	}
+
+	// Sanitize all user inputs
+	updateProduct.Name = utils.SanitizeProductName(updateProduct.Name)
+	updateProduct.Description = utils.SanitizeProductDescription(updateProduct.Description)
+	updateProduct.Image = utils.SanitizeInput(updateProduct.Image, utils.DefaultTextOptions)
+
+	// Validate that required fields are not empty after sanitization
+	if strings.TrimSpace(updateProduct.Name) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
+		return
+	}
+
+	// Validate price if provided
+	if updateProduct.Price <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Price must be greater than 0"})
+		return
+	}
+
+	// Validate status if provided
+	if updateProduct.Status != "" && !utils.IsValidProductStatus(updateProduct.Status) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be draft, published, or archived"})
 		return
 	}
 

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { LockClosedIcon, EnvelopeIcon} from '@heroicons/react/24/outline';
 import { getRoleBasedRedirect } from '../utils/roleUtils';
 import type { UserRole } from '../utils/roleUtils';
+import { InputSanitizer } from '../utils/inputSanitization';
 
 export function LoginPage() {
   // Common state
@@ -166,7 +167,7 @@ export function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(InputSanitizer.email(e.target.value))}
                   className="block w-full pl-12 pr-4 py-3.5 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 hover:border-slate-400 bg-slate-50 focus:bg-white shadow-sm"
                   placeholder="Enter your email"
                 />

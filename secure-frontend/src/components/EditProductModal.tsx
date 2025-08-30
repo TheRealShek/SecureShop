@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Product } from '../types';
+import { InputSanitizer } from '../utils/inputSanitization';
 
 interface EditProductModalProps {
   product: Product | null;
@@ -96,7 +97,32 @@ export function EditProductModal({
   };
 
   const handleInputChange = (field: keyof ProductFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    
+    // Apply appropriate sanitization based on field type
+    if (typeof value === 'string') {
+      switch (field) {
+        case 'name':
+          sanitizedValue = InputSanitizer.productName(value);
+          break;
+        case 'description':
+          sanitizedValue = InputSanitizer.productDescription(value);
+          break;
+        case 'image':
+          sanitizedValue = InputSanitizer.url(value);
+          break;
+        default:
+          sanitizedValue = InputSanitizer.general(value);
+      }
+    } else if (typeof value === 'number') {
+      if (field === 'price') {
+        sanitizedValue = InputSanitizer.price(value);
+      } else if (field === 'stock') {
+        sanitizedValue = InputSanitizer.quantity(value);
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
