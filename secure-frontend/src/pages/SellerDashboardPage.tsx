@@ -121,7 +121,7 @@ export function SellerDashboardPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <div className="text-red-500 text-6xl mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
           <p className="text-gray-600 mb-4">
             {productsError?.message || 'Failed to load dashboard data'}

@@ -61,7 +61,7 @@ export class LightweightProductService {
    * Fetch lightweight products (fast loading fields only)
    */
   static async getLightweightProducts(): Promise<LightweightProduct[]> {
-    console.log('🚀 [DEBUG] Fetching lightweight products for fast loading...');
+    console.log(' [DEBUG] Fetching lightweight products for fast loading...');
     
     try {
       const { data, error } = await supabase
@@ -83,7 +83,7 @@ export class LightweightProductService {
         rating: item.rating || 5.0,
       }));
 
-      console.log('✅ [DEBUG] Lightweight products loaded:', lightweightProducts.length);
+      console.log(' [DEBUG] Lightweight products loaded:', lightweightProducts.length);
       
       // Cache the results
       this.cacheLightweightProducts(lightweightProducts);
@@ -99,7 +99,7 @@ export class LightweightProductService {
    * Fetch extended product fields for background loading
    */
   static async getProductExtendedFields(productIds: string[]): Promise<Record<string, ProductExtendedFields>> {
-    console.log('🔄 [DEBUG] Fetching extended product fields in background...', productIds.length);
+    console.log(' [DEBUG] Fetching extended product fields in background...', productIds.length);
     
     try {
       const { data, error } = await supabase
@@ -124,7 +124,7 @@ export class LightweightProductService {
         };
       });
 
-      console.log('✅ [DEBUG] Extended product fields loaded for', Object.keys(extendedFields).length, 'products');
+      console.log(' [DEBUG] Extended product fields loaded for', Object.keys(extendedFields).length, 'products');
       
       return extendedFields;
     } catch (error) {

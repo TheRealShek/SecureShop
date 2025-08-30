@@ -26,7 +26,7 @@ export function LoginPage() {
 
   // UNIFIED NAVIGATION LOGIC - Only component responsible for post-login redirect
   useEffect(() => {
-    console.log('🔄 LoginPage useEffect triggered:', { 
+    console.log(' LoginPage useEffect triggered:', { 
       loading, 
       loadingRole,
       authReady, 
@@ -50,11 +50,11 @@ export function LoginPage() {
       return; // Role not ready for redirect
     }
 
-    console.log(`📍 LoginPage navigation: ${role} -> ${redirectPath}`);
+    console.log(` LoginPage navigation: ${role} -> ${redirectPath}`);
     
     // SIMPLIFIED: Always redirect to role-based home after login
     // This prevents redirect loops and ensures users land on appropriate pages
-    console.log('🏠 Redirecting to role-based home:', redirectPath);
+    console.log(' Redirecting to role-based home:', redirectPath);
     navigate(redirectPath, { replace: true });
   }, [authReady, loading, loadingRole, isAuthenticated, role, navigate, location.state]);
 

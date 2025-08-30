@@ -52,7 +52,7 @@ export function useSellerOrders(sellerId?: string): UseSellerOrdersReturn {
         throw new Error('Seller ID is required');
       }
 
-      console.log('🔍 Fetching orders for seller:', effectiveSellerId);
+      console.log(' Fetching orders for seller:', effectiveSellerId);
 
       // Start from order_items and join with products and orders
       const { data, error } = await supabase
@@ -78,7 +78,7 @@ export function useSellerOrders(sellerId?: string): UseSellerOrdersReturn {
         .order('orders(created_at)', { ascending: false });
 
       if (error) {
-        console.error('❌ Failed to fetch seller orders:', error);
+        console.error(' Failed to fetch seller orders:', error);
         throw error;
       }
 
@@ -93,7 +93,7 @@ export function useSellerOrders(sellerId?: string): UseSellerOrdersReturn {
         order: Array.isArray(item.orders) ? item.orders[0] : item.orders,
       }));
 
-      console.log('✅ Seller orders fetched:', transformedData.length);
+      console.log(' Seller orders fetched:', transformedData.length);
       return transformedData;
     },
     enabled: createRoleBasedEnabled(isAuthenticated, user?.role, ['seller', 'admin'], !!effectiveSellerId),

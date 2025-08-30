@@ -43,7 +43,7 @@ export function EditProductPage() {
     queryFn: async () => {
       if (!id) throw new Error('Product ID is required');
       
-      console.log('🔍 [DEBUG] Fetching product for edit via Supabase:', id, 'Role:', role);
+      console.log(' [DEBUG] Fetching product for edit via Supabase:', id, 'Role:', role);
       
       // Get current authenticated user
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -65,7 +65,7 @@ export function EditProductPage() {
       const { data: productData, error: productError } = await query.single();
       
       if (productError) {
-        console.error('❌ [DEBUG] Error fetching product for edit:', productError);
+        console.error(' [DEBUG] Error fetching product for edit:', productError);
         throw new Error(`Failed to fetch product: ${productError.message}`);
       }
       
@@ -73,7 +73,7 @@ export function EditProductPage() {
         throw new Error('Product not found or you do not have permission to edit it');
       }
       
-      console.log('✅ [DEBUG] Product fetched successfully for edit:', productData);
+      console.log(' [DEBUG] Product fetched successfully for edit:', productData);
       
       // Transform Supabase data to match frontend Product interface
       return {
@@ -93,7 +93,7 @@ export function EditProductPage() {
   // Set form data when product loads
   useEffect(() => {
     if (product) {
-      console.log('📝 [DEBUG] Populating form with product data:', product);
+      console.log(' [DEBUG] Populating form with product data:', product);
       const newFormData = {
         name: product.name || '',
         description: product.description || '',
@@ -101,13 +101,13 @@ export function EditProductPage() {
         stock: product.stock || 0,
         image: product.image || '',
       };
-      console.log('📝 [DEBUG] Setting form data to:', newFormData);
+      console.log(' [DEBUG] Setting form data to:', newFormData);
       setFormData(newFormData);
       // Clear any existing errors when loading new product
       setErrors({});
       setSubmitError('');
     } else {
-      console.log('⚠️ [DEBUG] No product data available yet');
+      console.log(' [DEBUG] No product data available yet');
     }
   }, [product]);
 
@@ -140,7 +140,7 @@ export function EditProductPage() {
         if (data.stock !== undefined) updateData.stock = data.stock;
         if (data.image !== undefined) updateData.image_url = data.image;
 
-        console.log('🔄 [DEBUG] Admin updating product:', { id, updateData });
+        console.log(' [DEBUG] Admin updating product:', { id, updateData });
 
         const { data: updatedData, error: updateError } = await supabase
           .from('products')
@@ -149,7 +149,7 @@ export function EditProductPage() {
           .select();
 
         if (updateError) {
-          console.error('❌ [DEBUG] Update error:', updateError);
+          console.error(' [DEBUG] Update error:', updateError);
           throw new Error(`Failed to update product: ${updateError.message}`);
         }
 
@@ -157,7 +157,7 @@ export function EditProductPage() {
           throw new Error('No product was updated');
         }
 
-        console.log('✅ [DEBUG] Product updated successfully:', updatedData[0]);
+        console.log(' [DEBUG] Product updated successfully:', updatedData[0]);
         return updatedData[0];
       } else {
         // Use normal seller service for sellers
@@ -239,7 +239,7 @@ export function EditProductPage() {
     setSubmitError(''); // Clear any previous errors
     
     if (validateForm() && id) {
-      console.log('🚀 [DEBUG] Submitting product update via Supabase:', {
+      console.log(' [DEBUG] Submitting product update via Supabase:', {
         productId: id,
         formData,
         sellerAction: 'update',
@@ -247,7 +247,7 @@ export function EditProductPage() {
       });
       updateProductMutation.mutate({ id, data: formData });
     } else {
-      console.log('❌ [DEBUG] Form validation failed or no product ID:', {
+      console.log(' [DEBUG] Form validation failed or no product ID:', {
         hasId: !!id,
         formData,
         errors

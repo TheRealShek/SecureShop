@@ -400,7 +400,7 @@ export function SellerDashboard({ sellerId }: SellerDashboardProps) {
           {getOutOfStockProducts().length === 0 && getLowStockProducts().length === 0 && (
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <div className="flex items-center">
-                <div className="text-sm text-green-700">All products are well stocked! 🎉</div>
+                <div className="text-sm text-green-700">All products are well stocked! </div>
               </div>
             </div>
           )}

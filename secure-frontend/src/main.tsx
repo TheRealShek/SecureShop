@@ -9,7 +9,7 @@ import { debugAuthState, debugForceLogout } from './utils/debugAuth';
 if (typeof window !== 'undefined') {
   (window as any).debugAuth = debugAuthState;
   (window as any).forceLogout = debugForceLogout;
-  console.log('🔧 Debug functions available: window.debugAuth() and window.forceLogout()');
+  console.log(' Debug functions available: window.debugAuth() and window.forceLogout()');
 }
 
 const rootElement = document.getElementById('root');

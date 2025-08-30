@@ -20,19 +20,19 @@ export const api: AxiosInstance = axios.create({
 
 // Request interceptor to add auth token and logging
 api.interceptors.request.use(async (config) => {
-  console.log('📡 [DEBUG] Preparing request interceptor...');
+  console.log(' [DEBUG] Preparing request interceptor...');
   
   try {
     // Get fresh token from Supabase session instead of localStorage
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('❌ [DEBUG] Error getting session:', error);
+      console.error(' [DEBUG] Error getting session:', error);
     }
     
     const token = session?.access_token;
     
-    console.log('📡 [DEBUG] Outgoing request:', {
+    console.log(' [DEBUG] Outgoing request:', {
       url: config.url,
       method: config.method?.toUpperCase(),
       baseURL: config.baseURL,
@@ -50,12 +50,12 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
-      console.warn('⚠️ [DEBUG] No valid Supabase session token found');
+      console.warn(' [DEBUG] No valid Supabase session token found');
     }
     
     return config;
   } catch (error) {
-    console.error('❌ [DEBUG] Request interceptor error:', error);
+    console.error(' [DEBUG] Request interceptor error:', error);
     return config;
   }
 });
@@ -63,7 +63,7 @@ api.interceptors.request.use(async (config) => {
 // Response interceptor for error handling and logging
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ [DEBUG] Response received:', {
+    console.log(' [DEBUG] Response received:', {
       status: response.status,
       statusText: response.statusText,
       url: response.config.url,
@@ -77,7 +77,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('❌ [DEBUG] Response error:', {
+    console.error(' [DEBUG] Response error:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
@@ -87,7 +87,7 @@ api.interceptors.response.use(
     
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      console.log('🔒 [DEBUG] 401 Unauthorized - clearing token and redirecting');
+      console.log(' [DEBUG] 401 Unauthorized - clearing token and redirecting');
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

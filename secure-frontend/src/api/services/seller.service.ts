@@ -20,19 +20,19 @@ import {
  * @returns Promise<Product[]> Array of products owned by the current seller
  */
 const getSellerProducts = async (): Promise<Product[]> => {
-  console.log('🏪 [DEBUG] SellerProductService.getSellerProducts() called - Direct Supabase');
+  console.log('[DEBUG] SellerProductService.getSellerProducts() called - Direct Supabase');
   
   try {
     // Get current authenticated user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError || !userData.user) {
-      console.error('❌ [DEBUG] No authenticated user found:', userError);
+      console.error(' [DEBUG] No authenticated user found:', userError);
       throw new Error('User not authenticated');
     }
     
     const userId = userData.user.id;
-    console.log('🔍 [DEBUG] Fetching products for seller ID:', userId);
+    console.log(' [DEBUG] Fetching products for seller ID:', userId);
     
     // Query products table directly where seller_id matches current user
     const { data: productsData, error: productsError } = await supabase
@@ -42,23 +42,23 @@ const getSellerProducts = async (): Promise<Product[]> => {
       .order('created_at', { ascending: false });
     
     if (productsError) {
-      console.error('❌ [DEBUG] Supabase query error:', productsError);
+      console.error(' [DEBUG] Supabase query error:', productsError);
       throw new Error(`Failed to fetch seller products: ${productsError.message}`);
     }
     
-    console.log('📦 [DEBUG] Raw Supabase products data:', productsData);
+    console.log(' [DEBUG] Raw Supabase products data:', productsData);
     
     // Transform Supabase data to match our Product interface
     const products: Product[] = (productsData || []).map((item, index) => {
-      console.log(`🔄 [DEBUG] Transforming product ${index}:`, item);
+      console.log(` [DEBUG] Transforming product ${index}:`, item);
       
       const mappedProduct = transformSupabaseProduct(item);
       
-      console.log(`✅ [DEBUG] Mapped product ${index}:`, mappedProduct);
+      console.log(` [DEBUG] Mapped product ${index}:`, mappedProduct);
       return mappedProduct;
     });
     
-    console.log('✅ [DEBUG] Final seller products result (Direct Supabase):', {
+    console.log(' [DEBUG] Final seller products result (Direct Supabase):', {
       count: products.length,
       sellerQuery: `seller_id = ${userId}`,
       products: products.map(p => ({ id: p.id, name: p.name, sellerId: p.sellerId, price: p.price }))
@@ -66,7 +66,7 @@ const getSellerProducts = async (): Promise<Product[]> => {
     
     return products;
   } catch (error) {
-    console.error('❌ [DEBUG] Error in SellerProductService.getSellerProducts (Direct Supabase):', {
+    console.error(' [DEBUG] Error in SellerProductService.getSellerProducts (Direct Supabase):', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
@@ -83,19 +83,19 @@ const getSellerProducts = async (): Promise<Product[]> => {
  * @returns Promise<Product> The created product
  */
 const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'sellerId' | 'rating'>): Promise<Product> => {
-  console.log('🏪 [DEBUG] Creating product via Supabase directly:', productData);
+  console.log('[DEBUG] Creating product via Supabase directly:', productData);
   
   try {
     // Get current authenticated user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError || !userData.user) {
-      console.error('❌ [DEBUG] No authenticated user for product creation:', userError);
+      console.error(' [DEBUG] No authenticated user for product creation:', userError);
       throw new Error('User not authenticated');
     }
     
     const sellerId = userData.user.id;
-    console.log('🔍 [DEBUG] Creating product for seller ID:', sellerId);
+    console.log(' [DEBUG] Creating product for seller ID:', sellerId);
     
     // Insert into products table with seller_id
     const { data: insertedData, error: insertError } = await supabase
@@ -113,19 +113,19 @@ const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'se
       .single();
     
     if (insertError) {
-      console.error('❌ [DEBUG] Supabase insert error:', insertError);
+      console.error(' [DEBUG] Supabase insert error:', insertError);
       throw new Error(`Failed to create product: ${insertError.message}`);
     }
     
-    console.log('✅ [DEBUG] Product created in Supabase:', insertedData);
+    console.log(' [DEBUG] Product created in Supabase:', insertedData);
     
     // Transform response to match frontend Product interface
     const product = transformSupabaseProduct(insertedData);
     
-    console.log('✅ [DEBUG] Transformed created product:', product);
+    console.log(' [DEBUG] Transformed created product:', product);
     return product;
   } catch (error) {
-    console.error('❌ [DEBUG] Error creating product via Supabase:', error);
+    console.error(' [DEBUG] Error creating product via Supabase:', error);
     throw error;
   }
 };
@@ -139,7 +139,7 @@ const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'se
  * @returns Promise<Product> The updated product
  */
 const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
-  console.log('🏪 [DEBUG] Updating product via Supabase:', { id, updates });
+  console.log('[DEBUG] Updating product via Supabase:', { id, updates });
   
   try {
     // Get current authenticated user
@@ -154,7 +154,7 @@ const updateProduct = async (id: string, updates: Partial<Product>): Promise<Pro
     // Prepare update data - map frontend fields to database fields
     const updateData = transformProductUpdatesToSupabase(updates);
     
-    console.log('🔄 [DEBUG] Supabase update data:', updateData);
+    console.log(' [DEBUG] Supabase update data:', updateData);
     
     // Update the product, but only if it belongs to the current seller
     const { data: updatedData, error: updateError } = await supabase
@@ -166,7 +166,7 @@ const updateProduct = async (id: string, updates: Partial<Product>): Promise<Pro
       .single();
     
     if (updateError) {
-      console.error('❌ [DEBUG] Supabase update error:', updateError);
+      console.error(' [DEBUG] Supabase update error:', updateError);
       throw new Error(`Failed to update product: ${updateError.message}`);
     }
     
@@ -174,12 +174,12 @@ const updateProduct = async (id: string, updates: Partial<Product>): Promise<Pro
       throw new Error('Product not found or you do not have permission to update it');
     }
     
-    console.log('✅ [DEBUG] Product updated in Supabase:', updatedData);
+    console.log(' [DEBUG] Product updated in Supabase:', updatedData);
     
     // Transform response to match frontend Product interface
     return transformSupabaseProduct(updatedData);
   } catch (error) {
-    console.error('❌ [DEBUG] Error updating product via Supabase:', error);
+    console.error(' [DEBUG] Error updating product via Supabase:', error);
     throw error;
   }
 };
@@ -192,7 +192,7 @@ const updateProduct = async (id: string, updates: Partial<Product>): Promise<Pro
  * @returns Promise<void>
  */
 const deleteProduct = async (id: string): Promise<void> => {
-  console.log('🏪 [DEBUG] Deleting product via Supabase:', id);
+  console.log('[DEBUG] Deleting product via Supabase:', id);
   
   try {
     // Get current authenticated user
@@ -212,13 +212,13 @@ const deleteProduct = async (id: string): Promise<void> => {
       .eq('seller_id', sellerId); // Security: only delete if seller owns the product
     
     if (deleteError) {
-      console.error('❌ [DEBUG] Supabase delete error:', deleteError);
+      console.error(' [DEBUG] Supabase delete error:', deleteError);
       throw new Error(`Failed to delete product: ${deleteError.message}`);
     }
     
-    console.log('✅ [DEBUG] Product deleted from Supabase:', id);
+    console.log(' [DEBUG] Product deleted from Supabase:', id);
   } catch (error) {
-    console.error('❌ [DEBUG] Error deleting product via Supabase:', error);
+    console.error(' [DEBUG] Error deleting product via Supabase:', error);
     throw error;
   }
 };

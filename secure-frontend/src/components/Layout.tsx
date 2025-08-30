@@ -56,13 +56,13 @@ export function Layout() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      console.log('🚪 Starting logout from Layout...');
+      console.log(' Starting logout from Layout...');
       await logout();
       
       // Navigation is handled by the AuthContext logout function
-      console.log('✅ Logout completed from Layout');
+      console.log(' Logout completed from Layout');
     } catch (error) {
-      console.error('❌ Logout failed in Layout:', error);
+      console.error(' Logout failed in Layout:', error);
       
       // Fallback navigation if logout fails
       setTimeout(() => {

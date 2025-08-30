@@ -20,9 +20,9 @@ export function useTabVisibility() {
 
       // Log visibility changes for debugging
       if (wasVisible && document.hidden) {
-        console.log('🔍 Tab hidden - preventing unnecessary operations');
+        console.log(' Tab hidden - preventing unnecessary operations');
       } else if (!wasVisible && !document.hidden) {
-        console.log('👁️ Tab visible - resuming normal operations');
+        console.log(' Tab visible - resuming normal operations');
       }
     };
 

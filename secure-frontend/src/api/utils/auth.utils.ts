@@ -15,11 +15,11 @@ import { fetchUserRole } from '../../utils/roleUtils';
  */
 export const getCurrentUserRole = async (): Promise<string | null> => {
   try {
-    console.log('🔍 [DEBUG] Getting current user role...');
+    console.log(' [DEBUG] Getting current user role...');
     
     // Get current user first
     const { data: userData } = await supabase.auth.getUser();
-    console.log('🔍 [DEBUG] User data from Supabase:', {
+    console.log(' [DEBUG] User data from Supabase:', {
       user: userData.user ? {
         id: userData.user.id,
         email: userData.user.email,
@@ -28,20 +28,20 @@ export const getCurrentUserRole = async (): Promise<string | null> => {
     });
     
     if (!userData.user) {
-      console.log('❌ [DEBUG] No user found');
+      console.log(' [DEBUG] No user found');
       return null;
     }
     
     // Get fresh role from database (no caching)
     const role = await fetchUserRole(userData.user.id);
-    console.log('🔍 [DEBUG] Fresh role for user:', {
+    console.log(' [DEBUG] Fresh role for user:', {
       userId: userData.user.id,
       role: role
     });
     
     return role;
   } catch (error) {
-    console.error('❌ [DEBUG] Error getting user role:', error);
+    console.error(' [DEBUG] Error getting user role:', error);
     return null;
   }
 };
@@ -111,10 +111,10 @@ export const logout = async (): Promise<void> => {
   const { safeLogoutAndNavigate } = await import('../../utils/logoutCleanup');
   
   try {
-    console.log('🚪 API utils logout - using unified cleanup...');
+    console.log(' API utils logout - using unified cleanup...');
     await safeLogoutAndNavigate();
   } catch (error) {
-    console.error('❌ API utils logout failed, using fallback:', error);
+    console.error(' API utils logout failed, using fallback:', error);
     
     // Fallback to original logic if unified cleanup fails
     try {
@@ -122,7 +122,7 @@ export const logout = async (): Promise<void> => {
       localStorage.removeItem('token');
       window.location.href = '/login';
     } catch (fallbackError) {
-      console.error('❌ Fallback logout failed:', fallbackError);
+      console.error(' Fallback logout failed:', fallbackError);
       // Force redirect even if everything fails
       localStorage.removeItem('token');
       window.location.href = '/login';

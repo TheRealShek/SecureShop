@@ -51,7 +51,7 @@ export function useProgressivePaginatedProducts(): UseProgressivePaginatedProduc
       const cachedProducts = LightweightProductService.getCachedLightweightProducts();
       
       if (cachedProducts && cachedProducts.length > 0) {
-        console.log('📦 [DEBUG] Using cached lightweight products:', cachedProducts.length);
+        console.log(' [DEBUG] Using cached lightweight products:', cachedProducts.length);
         setLightweightProducts(cachedProducts);
         setIsInitialLoading(false);
         
@@ -66,7 +66,7 @@ export function useProgressivePaginatedProducts(): UseProgressivePaginatedProduc
         }, 1000);
       } else {
         // No cache, fetch fresh data
-        console.log('🚀 [DEBUG] No cache, fetching fresh lightweight products...');
+        console.log(' [DEBUG] No cache, fetching fresh lightweight products...');
         const products = await LightweightProductService.getLightweightProducts();
         setLightweightProducts(products);
         setIsInitialLoading(false);

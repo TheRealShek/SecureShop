@@ -182,29 +182,29 @@ export class HookAuditor {
     const hooksWithIssues = this.auditResults.filter(r => r.issues.length > 0);
     
     report += `## Summary\n`;
-    report += `- ✅ Fully compliant hooks: ${compliantHooks.length}\n`;
-    report += `- ⚠️ Hooks with issues: ${hooksWithIssues.length}\n\n`;
+    report += `-  Fully compliant hooks: ${compliantHooks.length}\n`;
+    report += `-  Hooks with issues: ${hooksWithIssues.length}\n\n`;
     
     // Detailed results
     report += `## Detailed Results\n\n`;
     
     this.auditResults.forEach(result => {
       report += `### ${result.hookName}\n`;
-      report += `- Uses React Query: ${result.usesReactQuery ? '✅' : '❌'}\n`;
-      report += `- Uses AuthContext: ${result.usesAuthContext ? '✅' : '❌'}\n`;
-      report += `- Avoids Direct Storage: ${result.avoidsDirectStorage ? '✅' : '❌'}\n`;
-      report += `- Has Role Validation: ${result.hasRoleValidation ? '✅' : '❌'}\n`;
-      report += `- Has Optimized Caching: ${result.hasOptimizedCaching ? '✅' : '❌'}\n`;
-      report += `- Prevents Tab Switch Reloads: ${result.hasTabSwitchPrevention ? '✅' : '❌'}\n`;
+      report += `- Uses React Query: ${result.usesReactQuery ? '' : ''}\n`;
+      report += `- Uses AuthContext: ${result.usesAuthContext ? '' : ''}\n`;
+      report += `- Avoids Direct Storage: ${result.avoidsDirectStorage ? '' : ''}\n`;
+      report += `- Has Role Validation: ${result.hasRoleValidation ? '' : ''}\n`;
+      report += `- Has Optimized Caching: ${result.hasOptimizedCaching ? '' : ''}\n`;
+      report += `- Prevents Tab Switch Reloads: ${result.hasTabSwitchPrevention ? '' : ''}\n`;
       
       if (result.issues.length > 0) {
         report += `\n**Issues:**\n`;
-        result.issues.forEach(issue => report += `- ❌ ${issue}\n`);
+        result.issues.forEach(issue => report += `-  ${issue}\n`);
       }
       
       if (result.recommendations.length > 0) {
         report += `\n**Recommendations:**\n`;
-        result.recommendations.forEach(rec => report += `- 💡 ${rec}\n`);
+        result.recommendations.forEach(rec => report += `-  ${rec}\n`);
       }
       
       report += '\n';
@@ -229,21 +229,21 @@ export class HookAuditor {
     
     for (const scenario of testScenarios) {
       try {
-        console.log(`\n📋 Testing scenario: auth=${scenario.authenticated}, role=${scenario.role}`);
+        console.log(`\n Testing scenario: auth=${scenario.authenticated}, role=${scenario.role}`);
         
         // This would require mocking the auth context in a real implementation
         const result = hookFn();
         
         if (scenario.expectsData && !result?.data) {
-          console.warn(`⚠️ Expected data but got none for auth=${scenario.authenticated}, role=${scenario.role}`);
+          console.warn(` Expected data but got none for auth=${scenario.authenticated}, role=${scenario.role}`);
         } else if (!scenario.expectsData && result?.data) {
-          console.warn(`⚠️ Got unexpected data for auth=${scenario.authenticated}, role=${scenario.role}`);
+          console.warn(` Got unexpected data for auth=${scenario.authenticated}, role=${scenario.role}`);
         } else {
-          console.log(`✅ Scenario passed`);
+          console.log(` Scenario passed`);
         }
         
       } catch (error) {
-        console.error(`❌ Scenario failed:`, error);
+        console.error(` Scenario failed:`, error);
       }
     }
     
@@ -276,13 +276,13 @@ export class HookAuditor {
       console.log(`Hook execution time: ${duration.toFixed(2)}ms`);
       
       if (duration > 100) {
-        console.warn(`⚠️ Slow hook response (${duration.toFixed(2)}ms) - may cause tab switch delays`);
+        console.warn(` Slow hook response (${duration.toFixed(2)}ms) - may cause tab switch delays`);
       } else {
-        console.log(`✅ Good performance for tab switching`);
+        console.log(` Good performance for tab switching`);
       }
       
     } catch (error) {
-      console.error(`❌ Performance test failed:`, error);
+      console.error(` Performance test failed:`, error);
     }
     
     console.groupEnd();
@@ -321,9 +321,9 @@ export class SellerHookTester {
       console.log('Testing mutation handling...');
       console.log('Testing cache invalidation...');
       
-      console.log('✅ useSellerProducts tests completed');
+      console.log(' useSellerProducts tests completed');
     } catch (error) {
-      console.error('❌ useSellerProducts tests failed:', error);
+      console.error(' useSellerProducts tests failed:', error);
     }
     
     console.groupEnd();
@@ -341,9 +341,9 @@ export class SellerHookTester {
       console.log('Testing data transformation...');
       console.log('Testing cache management...');
       
-      console.log('✅ useSellerOrders tests completed');
+      console.log(' useSellerOrders tests completed');
     } catch (error) {
-      console.error('❌ useSellerOrders tests failed:', error);
+      console.error(' useSellerOrders tests failed:', error);
     }
     
     console.groupEnd();
@@ -353,14 +353,14 @@ export class SellerHookTester {
    * Run all seller hook tests
    */
   static runAllTests(): void {
-    console.log('🚀 Starting Seller Hook Tests');
+    console.log(' Starting Seller Hook Tests');
     console.log('=============================');
     
     this.testSellerProducts();
     this.testSellerOrders();
     
     console.log('=============================');
-    console.log('🎉 All seller hook tests completed');
+    console.log(' All seller hook tests completed');
   }
 }
 
@@ -368,5 +368,5 @@ export class SellerHookTester {
 if (typeof window !== 'undefined') {
   (window as any).HookAuditor = HookAuditor;
   (window as any).SellerHookTester = SellerHookTester;
-  console.log('🔍 Hook audit utilities available globally. Run HookAuditor.generateAuditReport() or SellerHookTester.runAllTests()');
+  console.log(' Hook audit utilities available globally. Run HookAuditor.generateAuditReport() or SellerHookTester.runAllTests()');
 }

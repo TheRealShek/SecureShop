@@ -11,22 +11,22 @@ You correctly identified that admin users can see products but cannot update/del
 ### Before Admin Policies (Current State):
 ```sql
 -- Products table policies:
-✅ "Authenticated users can read published products" (allows admin to read)
-✅ "Sellers can read own products" (doesn't apply to admin)
-❌ "Sellers can update own products" (admin is not the seller)
-❌ "Sellers can delete own products" (admin is not the seller)
+ "Authenticated users can read published products" (allows admin to read)
+ "Sellers can read own products" (doesn't apply to admin)
+ "Sellers can update own products" (admin is not the seller)
+ "Sellers can delete own products" (admin is not the seller)
 ```
 
 ### After Admin Policies (Fixed State):
 ```sql
 -- Products table policies:
-✅ "Authenticated users can read published products" (allows admin to read)
-✅ "Sellers can read own products" (doesn't apply to admin)
-✅ "Admin can read all products" (admin gets full read access)
-✅ "Admin can update any product" (admin can now update)
-✅ "Admin can delete any product" (admin can now delete)
-❌ "Sellers can update own products" (still restricted to sellers)
-❌ "Sellers can delete own products" (still restricted to sellers)
+ "Authenticated users can read published products" (allows admin to read)
+ "Sellers can read own products" (doesn't apply to admin)
+ "Admin can read all products" (admin gets full read access)
+ "Admin can update any product" (admin can now update)
+ "Admin can delete any product" (admin can now delete)
+ "Sellers can update own products" (still restricted to sellers)
+ "Sellers can delete own products" (still restricted to sellers)
 ```
 
 ## How RLS Policies Work
@@ -100,22 +100,22 @@ ORDER BY policyname;
 ## Expected Behavior After Setup
 
 ### Admin Users Can:
-- ✅ Read ALL products (published, draft, archived)
-- ✅ Update ANY product (regardless of seller)
-- ✅ Delete ANY product (regardless of seller)
-- ✅ Read all users, orders, cart items
-- ✅ Manage any order status
+-  Read ALL products (published, draft, archived)
+-  Update ANY product (regardless of seller)
+-  Delete ANY product (regardless of seller)
+-  Read all users, orders, cart items
+-  Manage any order status
 
 ### Seller Users Can Still:
-- ✅ Read published products + their own products
-- ✅ Update/delete only their own products
-- ❌ Cannot access other sellers' products
-- ❌ Cannot access admin-only features
+-  Read published products + their own products
+-  Update/delete only their own products
+-  Cannot access other sellers' products
+-  Cannot access admin-only features
 
 ### Buyer Users Can Still:
-- ✅ Read published products only
-- ✅ Manage their own cart and orders
-- ❌ Cannot access seller/admin features
+-  Read published products only
+-  Manage their own cart and orders
+-  Cannot access seller/admin features
 
 ## Security Notes
 

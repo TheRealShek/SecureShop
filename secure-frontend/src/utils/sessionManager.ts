@@ -83,7 +83,7 @@ export class SessionManager {
       const cacheKey = `${this.SESSION_CACHE_PREFIX}${key}`;
       sessionStorage.setItem(cacheKey, JSON.stringify(cacheItem));
       
-      console.log(`📦 Session cache set: ${key}`);
+      console.log(` Session cache set: ${key}`);
     } catch (error) {
       console.warn(`Failed to set session cache for ${key}:`, error);
     }
@@ -101,11 +101,11 @@ export class SessionManager {
       // Check expiration
       if (cacheItem.expires && Date.now() > cacheItem.expires) {
         sessionStorage.removeItem(cacheKey);
-        console.log(`📦 Session cache expired: ${key}`);
+        console.log(` Session cache expired: ${key}`);
         return null;
       }
 
-      console.log(`📦 Session cache hit: ${key}`);
+      console.log(` Session cache hit: ${key}`);
       return cacheItem.value;
     } catch (error) {
       console.warn(`Failed to get session cache for ${key}:`, error);
@@ -117,7 +117,7 @@ export class SessionManager {
     try {
       const cacheKey = `${this.SESSION_CACHE_PREFIX}${key}`;
       sessionStorage.removeItem(cacheKey);
-      console.log(`📦 Session cache removed: ${key}`);
+      console.log(` Session cache removed: ${key}`);
     } catch (error) {
       console.warn(`Failed to remove session cache for ${key}:`, error);
     }
@@ -131,7 +131,7 @@ export class SessionManager {
           sessionStorage.removeItem(key);
         }
       });
-      console.log('📦 All session cache cleared');
+      console.log(' All session cache cleared');
     } catch (error) {
       console.warn('Failed to clear session cache:', error);
     }
@@ -142,7 +142,7 @@ export class SessionManager {
    */
   static setPersistentToken(token: string, config: PersistentLoginConfig): void {
     if (!config.rememberMe) {
-      console.log('🔐 Remember me disabled, not storing persistent token');
+      console.log(' Remember me disabled, not storing persistent token');
       return;
     }
 
@@ -155,7 +155,7 @@ export class SessionManager {
       };
 
       localStorage.setItem(this.PERSISTENT_TOKEN_KEY, JSON.stringify(cacheItem));
-      console.log('🔐 Persistent token stored');
+      console.log(' Persistent token stored');
     } catch (error) {
       console.warn('Failed to store persistent token:', error);
     }
@@ -171,11 +171,11 @@ export class SessionManager {
       // Check expiration
       if (cacheItem.expires && Date.now() > cacheItem.expires) {
         localStorage.removeItem(this.PERSISTENT_TOKEN_KEY);
-        console.log('🔐 Persistent token expired');
+        console.log(' Persistent token expired');
         return null;
       }
 
-      console.log('🔐 Persistent token retrieved');
+      console.log(' Persistent token retrieved');
       return cacheItem.value;
     } catch (error) {
       console.warn('Failed to get persistent token:', error);
@@ -186,7 +186,7 @@ export class SessionManager {
   static removePersistentToken(): void {
     try {
       localStorage.removeItem(this.PERSISTENT_TOKEN_KEY);
-      console.log('🔐 Persistent token removed');
+      console.log(' Persistent token removed');
     } catch (error) {
       console.warn('Failed to remove persistent token:', error);
     }
@@ -228,35 +228,35 @@ export class SessionManager {
    */
   static async performCompleteLogout(): Promise<void> {
     try {
-      console.log('🧹 Starting complete session cleanup...');
+      console.log(' Starting complete session cleanup...');
 
       // 1. Sign out from Supabase (this clears the Supabase session)
       try {
-        console.log('📱 Signing out from Supabase...');
+        console.log(' Signing out from Supabase...');
         const { error } = await supabase.auth.signOut();
         if (error) {
-          console.error('⚠️ Supabase signout error:', error);
+          console.error(' Supabase signout error:', error);
         } else {
-          console.log('✅ Supabase session cleared');
+          console.log(' Supabase session cleared');
         }
       } catch (supabaseError) {
-        console.error('❌ Supabase signout failed:', supabaseError);
+        console.error(' Supabase signout failed:', supabaseError);
       }
 
       // 2. Clear all session storage (temporary cache)
       try {
-        console.log('📦 Clearing sessionStorage...');
+        console.log(' Clearing sessionStorage...');
         if (typeof window !== 'undefined' && window.sessionStorage) {
           sessionStorage.clear();
-          console.log('✅ sessionStorage cleared');
+          console.log(' sessionStorage cleared');
         }
       } catch (sessionStorageError) {
-        console.error('❌ sessionStorage clear failed:', sessionStorageError);
+        console.error(' sessionStorage clear failed:', sessionStorageError);
       }
 
       // 3. Clear persistent tokens from localStorage
       try {
-        console.log('🔐 Clearing persistent tokens...');
+        console.log(' Clearing persistent tokens...');
         this.removePersistentToken();
         
         // Clear any other auth-related localStorage items
@@ -274,14 +274,14 @@ export class SessionManager {
           localStorage.removeItem(key);
         });
         
-        console.log('✅ Persistent tokens cleared');
+        console.log(' Persistent tokens cleared');
       } catch (localStorageError) {
-        console.error('❌ localStorage clear failed:', localStorageError);
+        console.error(' localStorage clear failed:', localStorageError);
       }
 
       // 4. Clear cookies
       try {
-        console.log('🍪 Clearing cookies...');
+        console.log(' Clearing cookies...');
         if (typeof document !== 'undefined') {
           document.cookie.split(";").forEach(cookie => {
             const eqPos = cookie.indexOf("=");
@@ -298,15 +298,15 @@ export class SessionManager {
               document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${parentDomain}`;
             }
           });
-          console.log('✅ Cookies cleared');
+          console.log(' Cookies cleared');
         }
       } catch (cookieError) {
-        console.error('❌ Cookie clear failed:', cookieError);
+        console.error(' Cookie clear failed:', cookieError);
       }
 
       // 5. Clear IndexedDB databases
       try {
-        console.log('🗃️ Clearing IndexedDB...');
+        console.log(' Clearing IndexedDB...');
         if (typeof window !== 'undefined' && window.indexedDB) {
           const databases = [
             'supabase.auth.token',
@@ -316,18 +316,18 @@ export class SessionManager {
           
           databases.forEach(dbName => {
             const deleteReq = indexedDB.deleteDatabase(dbName);
-            deleteReq.onsuccess = () => console.log(`✅ Cleared IndexedDB: ${dbName}`);
-            deleteReq.onerror = () => console.warn(`⚠️ Failed to clear IndexedDB: ${dbName}`);
+            deleteReq.onsuccess = () => console.log(` Cleared IndexedDB: ${dbName}`);
+            deleteReq.onerror = () => console.warn(` Failed to clear IndexedDB: ${dbName}`);
           });
         }
       } catch (indexedDBError) {
-        console.error('❌ IndexedDB clear failed:', indexedDBError);
+        console.error(' IndexedDB clear failed:', indexedDBError);
       }
 
-      console.log('🎉 Complete session cleanup finished');
+      console.log(' Complete session cleanup finished');
 
     } catch (error) {
-      console.error('❌ Critical error during session cleanup:', error);
+      console.error(' Critical error during session cleanup:', error);
       throw error;
     }
   }
@@ -357,7 +357,7 @@ export class SessionManager {
    * Debug utility to log current storage state
    */
   static logStorageState(): void {
-    console.group('📊 Current Storage State');
+    console.group(' Current Storage State');
     
     try {
       // Check Supabase session

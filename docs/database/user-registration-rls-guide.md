@@ -4,10 +4,10 @@
 This document outlines the Row Level Security (RLS) policies needed for the SecureShop application to handle user registration and profile management.
 
 ## Current Policies (as mentioned)
-1. ✅ Users can read own profile
-2. ✅ Users can select their own row  
-3. ✅ Users can update own profile
-4. ✅ Users can update their own row
+1.  Users can read own profile
+2.  Users can select their own row  
+3.  Users can update own profile
+4.  Users can update their own row
 
 ## New Policy Required for Registration
 5. **Users can insert own profile during registration** - This allows new users to create their profile record during the registration process.

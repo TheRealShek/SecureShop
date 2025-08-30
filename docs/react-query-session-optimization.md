@@ -102,11 +102,11 @@ useQuery({
 - Poor user experience on slow connections
 
 ### After Optimization:
-- ✅ Tab switching is seamless without API calls
-- ✅ Window focus doesn't trigger unnecessary refetches
-- ✅ Smart caching reduces server load by ~60-70%
-- ✅ Better offline resilience with extended cache times
-- ✅ Consistent experience across all user roles
+-  Tab switching is seamless without API calls
+-  Window focus doesn't trigger unnecessary refetches
+-  Smart caching reduces server load by ~60-70%
+-  Better offline resilience with extended cache times
+-  Consistent experience across all user roles
 
 ## 8. Configuration Summary
 

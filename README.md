@@ -10,14 +10,14 @@ A modern, security-first e-commerce platform built with React, Go, and Supabase.
 
 ## ✨ Features at a Glance
 
-🔐 **Secure Authentication** - JWT-based auth with Supabase  
+ **Secure Authentication** - JWT-based auth with Supabase  
 👥 **Role-Based Access** - Admin, Seller, Buyer permissions  
 🛍️ **Complete E-commerce** - Products, cart, orders, checkout  
-📊 **Analytics Dashboard** - Sales metrics and insights  
-🚀 **Production Ready** - Clean architecture, error handling  
-📱 **Responsive Design** - Mobile-first with Tailwind CSS
+ **Analytics Dashboard** - Sales metrics and insights  
+ **Production Ready** - Clean architecture, error handling  
+ **Responsive Design** - Mobile-first with Tailwind CSS
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Why SecureShop?](#why-secureshop)
 - [Architecture](#architecture)
@@ -75,9 +75,9 @@ SecureShop/
     └── database/             # Database setup & RLS guides
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
-> **💡 Pro Tip:** For detailed setup instructions, see the [Complete Documentation](./docs/README.md).
+> ** Pro Tip:** For detailed setup instructions, see the [Complete Documentation](./docs/README.md).
 
 ### Prerequisites
 
@@ -116,7 +116,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 cd secure-backend
 go mod download
 go run main.go
-# 🚀 Server running on http://localhost:8080
+#  Server running on http://localhost:8080
 ```
 
 **Start Frontend:**
@@ -127,17 +127,17 @@ npm run dev
 # 🎨 App running on http://localhost:5173
 ```
 
-## 🎭 Demo Credentials
+##  Demo Credentials
 
 Try the platform with these pre-configured accounts:
 
 | Role   | Email                  | Password   | What You Can Do        |
 |--------|------------------------|------------|------------------------|
 | 👑 Admin  | admin@secureshop.com   | admin123   | Full system access, analytics |
-| 🏪 Seller | seller@secureshop.com  | seller123  | Manage products, view orders |
+| Seller | seller@secureshop.com  | seller123  | Manage products, view orders |
 | 🛒 Buyer  | buyer@secureshop.com   | buyer123   | Shop, cart, checkout   |
 
-## 🎯 Features
+##  Features
 
 ### 🛍️ Core E-commerce
 - **Product Catalog** - Browse, search, and filter products
@@ -145,13 +145,13 @@ Try the platform with these pre-configured accounts:
 - **Secure Checkout** - Order processing with inventory management
 - **Order Tracking** - View order history and status updates
 
-### 🔐 Security & Authentication
+###  Security & Authentication
 - **JWT Authentication** - Secure token-based login system
 - **Role-Based Access Control** - Fine-grained permissions system
 - **Row Level Security** - Database-level data protection
 - **API Security** - CORS protection, rate limiting, input validation
 
-### 📊 Business Features
+###  Business Features
 - **Seller Dashboard** - Product management and sales analytics
 - **Admin Panel** - User management and system oversight
 - **Real-time Updates** - Live inventory and order updates
@@ -190,19 +190,19 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder:
 - **[📖 Complete Documentation](./docs/README.md)** - Overview and getting started
 - **[🎨 Frontend Documentation](./docs/frontend/README.md)** - React app, components, hooks
 - **[⚙️ Backend Documentation](./docs/backend/README.md)** - Go API, authentication, security
-- **[🗄️ Database Documentation](./docs/database/)** - PostgreSQL setup, RLS configuration
+- **[ Database Documentation](./docs/database/)** - PostgreSQL setup, RLS configuration
 
 **Ready to build something awesome?** Clone this repo and start customizing!
 
 ## 📸 Screenshots
 
-### 🏠 Homepage
+###  Homepage
 Clean, modern interface with featured products and intuitive navigation.
 
 ### 🛒 Shopping Experience  
 Seamless cart management with real-time updates and smooth checkout flow.
 
-### 📊 Seller Dashboard
+###  Seller Dashboard
 Comprehensive analytics and product management tools for sellers.
 
 *Screenshots coming soon! This project is actively being developed.*
@@ -225,8 +225,8 @@ We love contributions! Here's how you can help:
 
 1. **🍴 Fork the repository**
 2. **🌟 Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **💾 Commit your changes** (`git commit -m 'Add amazing feature'`)
-4. **🚀 Push to the branch** (`git push origin feature/amazing-feature`)
+3. ** Commit your changes** (`git commit -m 'Add amazing feature'`)
+4. ** Push to the branch** (`git push origin feature/amazing-feature`)
 5. **📫 Open a Pull Request**
 
 ### Development Guidelines
@@ -235,7 +235,7 @@ We love contributions! Here's how you can help:
 - Update documentation for API changes
 - Ensure code passes all security checks
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -244,7 +244,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📚 **Documentation**: [Complete Docs](./docs/README.md)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/TheRealShek/SecureShop/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/TheRealShek/SecureShop/discussions)
-- 📧 **Email**: [Your contact email]
+-  **Email**: [Your contact email]
 
 ## ⭐ Star History
 

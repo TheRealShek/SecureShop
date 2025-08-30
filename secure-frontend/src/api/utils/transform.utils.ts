@@ -15,7 +15,7 @@ import { FALLBACK_IMAGE_URL } from '../config/constants';
  * @returns Product - Transformed product for frontend use
  */
 export const transformBackendProduct = (item: any): Product => {
-  console.log('🔄 [DEBUG] Transforming backend product item:', item);
+  console.log(' [DEBUG] Transforming backend product item:', item);
   
   return {
     id: item.id,

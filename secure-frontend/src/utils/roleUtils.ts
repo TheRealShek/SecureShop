@@ -13,16 +13,16 @@ export interface UserWithRole extends SupabaseUser {
  */
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
-    console.log('🔍 Fetching fresh user role for userId:', userId);
+    console.log(' Fetching fresh user role for userId:', userId);
     
     // First, verify we have a valid auth user
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData.user) {
-      console.error('❌ Auth user verification failed:', authError);
+      console.error(' Auth user verification failed:', authError);
       return null;
     }
     
-    console.log('✅ Auth user verified:', {
+    console.log(' Auth user verified:', {
       authUserId: authData.user.id,
       authUserEmail: authData.user.email,
       paramUserId: userId,
@@ -36,18 +36,18 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
       .eq('id', userId)
       .single(); // Use single() instead of maybeSingle() to ensure user exists
 
-    console.log('🗄️ Database query completed');
-    console.log('📊 Full user record from database:', data);
-    console.log('⚠️ Query error:', error);
+    console.log(' Database query completed');
+    console.log(' Full user record from database:', data);
+    console.log(' Query error:', error);
 
     // Handle specific error cases
     if (error) {
-      console.error('❌ Error fetching user role:', error.message, error.details);
+      console.error(' Error fetching user role:', error.message, error.details);
       
       // If user not found in users table, this is a problem
       if (error.code === 'PGRST116') {
-        console.error(`❌ User ${userId} (${authData.user.email}) not found in users table!`);
-        console.log('💡 User exists in auth.users but not in public.users table');
+        console.error(` User ${userId} (${authData.user.email}) not found in users table!`);
+        console.log(' User exists in auth.users but not in public.users table');
         return null;
       }
       return null;
@@ -57,9 +57,9 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
     const validRoles: UserRole[] = ['admin', 'seller', 'buyer'];
     const userRole = data.role as UserRole;
     
-    console.log('🎭 Retrieved role from database:', userRole);
-    console.log('✅ Role validation - Is valid:', validRoles.includes(userRole));
-    console.log('📋 Complete user data:', {
+    console.log(' Retrieved role from database:', userRole);
+    console.log(' Role validation - Is valid:', validRoles.includes(userRole));
+    console.log(' Complete user data:', {
       id: data.id,
       email: data.email,
       role: data.role,
@@ -67,14 +67,14 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
     });
     
     if (!validRoles.includes(userRole)) {
-      console.error(`❌ Invalid role "${data.role}" for user ${userId}, returning null`);
+      console.error(` Invalid role "${data.role}" for user ${userId}, returning null`);
       return null;
     }
 
-    console.log(`🎉 Successfully fetched role: ${userRole} for user ${userId} (${authData.user.email})`);
+    console.log(` Successfully fetched role: ${userRole} for user ${userId} (${authData.user.email})`);
     return userRole;
   } catch (error) {
-    console.error('💥 Failed to fetch user role:', error);
+    console.error(' Failed to fetch user role:', error);
     return null;
   }
 };
@@ -208,7 +208,7 @@ export const clearRoleCache = (): void => {
  * Refresh user role - always fetch fresh from database
  */
 export const refreshUserRole = async (userId: string): Promise<UserRole | null> => {
-  console.log('🔄 Refreshing user role (always fresh)...');
+  console.log(' Refreshing user role (always fresh)...');
   return await fetchUserRole(userId);
 };
 

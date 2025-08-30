@@ -18,7 +18,7 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
   const location = useLocation();
 
   // Debug logging for flow tracking
-  console.log('🛡️ ProtectedRoute check:', {
+  console.log(' ProtectedRoute check:', {
     path: location.pathname,
     isAuthenticated,
     loading,
@@ -32,7 +32,7 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
   // CRITICAL: Wait for BOTH authentication AND role to be completely loaded
   // This prevents premature access decisions before Supabase data is ready
   if (loading || loadingRole) {
-    console.log('⏳ ProtectedRoute: Still loading, showing spinner');
+    console.log(' ProtectedRoute: Still loading, showing spinner');
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -45,7 +45,7 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
 
   // If not authenticated at all, redirect to login
   if (!isAuthenticated || !user) {
-    console.log('🚫 ProtectedRoute: Not authenticated, redirecting to login');
+    console.log(' ProtectedRoute: Not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -53,16 +53,16 @@ export function ProtectedRoute({ children, allowedRoles, requiredRole }: Protect
   // If loadingRole is false but role is still null, it means there was an error
   // In this case, we should redirect to login to re-authenticate
   if (!role) {
-    console.warn('⚠️ ProtectedRoute: No role available after loading completed, redirecting to login');
+    console.warn(' ProtectedRoute: No role available after loading completed, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  console.log('✅ ProtectedRoute: All checks passed, proceeding with access control');
+  console.log(' ProtectedRoute: All checks passed, proceeding with access control');
 
   // ADMIN RESTRICTION: Check if admin is trying to access non-dashboard routes
   const adminRedirect = getAccessControlRedirect(role, location.pathname);
   if (adminRedirect) {
-    console.log('🔒 Admin trying to access restricted route, redirecting to dashboard');
+    console.log(' Admin trying to access restricted route, redirecting to dashboard');
     return <Navigate to={adminRedirect} replace />;
   }
 

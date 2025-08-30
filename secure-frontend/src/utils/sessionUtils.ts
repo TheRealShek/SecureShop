@@ -10,14 +10,14 @@
  */
 export const forceCleanSession = async (): Promise<void> => {
   try {
-    console.log('⚠️ Warning: forceCleanSession is deprecated. Use performCompleteLogout from logoutCleanup.ts');
+    console.log(' Warning: forceCleanSession is deprecated. Use performCompleteLogout from logoutCleanup.ts');
     
     // Import and use the new unified cleanup
     const { performCompleteLogout } = await import('./logoutCleanup');
     await performCompleteLogout();
     
   } catch (error) {
-    console.error('❌ New cleanup failed, falling back to legacy method:', error);
+    console.error(' New cleanup failed, falling back to legacy method:', error);
     
     // Fallback to legacy cleanup
     try {
@@ -56,7 +56,7 @@ export const forceCleanSession = async (): Promise<void> => {
       }
       
     } catch (fallbackError) {
-      console.error('❌ Legacy cleanup also failed:', fallbackError);
+      console.error(' Legacy cleanup also failed:', fallbackError);
     }
   }
 };
@@ -78,14 +78,14 @@ export const forcePageRefresh = (delay = 100): void => {
  */
 export const forceNavigateToLogin = async (): Promise<void> => {
   try {
-    console.log('⚠️ Warning: forceNavigateToLogin is deprecated. Use safeLogoutAndNavigate from logoutCleanup.ts');
+    console.log(' Warning: forceNavigateToLogin is deprecated. Use safeLogoutAndNavigate from logoutCleanup.ts');
     
     // Import and use the new unified cleanup
     const { safeLogoutAndNavigate } = await import('./logoutCleanup');
     await safeLogoutAndNavigate();
     
   } catch (error) {
-    console.error('❌ New cleanup failed, falling back to legacy method:', error);
+    console.error(' New cleanup failed, falling back to legacy method:', error);
     
     // Fallback to legacy method
     await forceCleanSession();

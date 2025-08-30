@@ -62,7 +62,7 @@ export function Cart() {
   };
 
   const handleCheckoutSuccess = (_orderId: string) => {
-    showToast('Order placed successfully! 🎉', 'success');
+    showToast('Order placed successfully! ', 'success');
   };
 
   const handleCheckoutError = (error: string) => {

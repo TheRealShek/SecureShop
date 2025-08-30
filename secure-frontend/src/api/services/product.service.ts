@@ -26,27 +26,27 @@ import {
  * @returns Promise<Product[]> Array of products
  */
 const getAll = async (): Promise<Product[]> => {
-  console.log('🚀 [DEBUG] ProductService.getAll() called');
+  console.log(' [DEBUG] ProductService.getAll() called');
   
   const userRole = await getCurrentUserRole();
-  console.log('🔍 [DEBUG] User role determined:', userRole);
+  console.log(' [DEBUG] User role determined:', userRole);
   
   // For sellers, use backend API to get role-filtered products
   if (userRole === 'seller') {
-    console.log('✅ [DEBUG] User is a seller, using backend API');
+    console.log(' [DEBUG] User is a seller, using backend API');
     
     try {
       // Check if auth token exists
       const token = localStorage.getItem('token');
-      console.log('🔑 [DEBUG] Auth token status:', {
+      console.log(' [DEBUG] Auth token status:', {
         exists: !!token,
         tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
       });
       
-      console.log('📡 [DEBUG] Making request to /api/products...');
+      console.log(' [DEBUG] Making request to /api/products...');
       const response = await api.get('/api/products');
       
-      console.log('📦 [DEBUG] Backend response:', {
+      console.log(' [DEBUG] Backend response:', {
         status: response.status,
         statusText: response.statusText,
         dataType: typeof response.data,
@@ -57,14 +57,14 @@ const getAll = async (): Promise<Product[]> => {
       // Transform backend data to match frontend Product interface
       const products: Product[] = (response.data || []).map(transformBackendProduct);
       
-      console.log('✅ [DEBUG] Successfully transformed products:', {
+      console.log(' [DEBUG] Successfully transformed products:', {
         count: products.length,
         products: products.map(p => ({ id: p.id, name: p.name, sellerId: p.sellerId }))
       });
       
       return products;
     } catch (error) {
-      console.error('❌ [DEBUG] Error fetching seller products from backend:', {
+      console.error(' [DEBUG] Error fetching seller products from backend:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         status: (error as any)?.response?.status,
