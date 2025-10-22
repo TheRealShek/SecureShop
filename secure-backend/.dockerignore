@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+README.md
+LICENSE
+docs/
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+*_test.go
+handlers/handlers_test.go
+loadtest/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Misc
+.DS_Store
+Thumbs.db
