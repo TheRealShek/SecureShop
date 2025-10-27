@@ -1,4 +1,17 @@
-# SecureShop .gitignore
-# Add improvements file
-IMPROVEMENTS.md
-# ...existing rules...
+# Environment files with sensitive credentials
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Allow .env.example files
+!.env.example
+
+# Build artifacts
+dist/
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

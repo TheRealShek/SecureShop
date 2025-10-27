@@ -30,9 +30,8 @@ WORKDIR /app
 # Copy timezone data
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Copy the binary and data
+# Copy the binary
 COPY --from=builder /app/main .
-COPY --from=builder /app/data ./data
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
