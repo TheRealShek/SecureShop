@@ -49,17 +49,18 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built files with proper permissions
 COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
-# Create nginx cache directories
-RUN mkdir -p /var/cache/nginx/client_temp && \
-    chown -R nginx:nginx /var/cache/nginx
+# Create nginx directories with proper permissions
+RUN mkdir -p /var/cache/nginx/client_temp /run/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /run/nginx && \
+    chmod -R 755 /var/cache/nginx /run/nginx
 
-# Switch to non-root user
-USER nginx
+# DON'T switch to non-root user - nginx needs root for binding port 80
+# Worker processes will run as nginx user (defined in nginx.conf)
 
 EXPOSE 80
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD curl -f http://localhost/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
