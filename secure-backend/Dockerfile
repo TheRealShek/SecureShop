@@ -13,9 +13,8 @@ RUN go mod download && go mod verify
 # Copy source code
 COPY . .
 
-# Tidy go.mod and build in one step (faster)
-RUN go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main .
+# Build with minimal flags
+RUN go mod tidy && go build -o main .
 
 # Final production stage
 FROM alpine:latest
@@ -41,8 +40,8 @@ USER appuser
 
 EXPOSE 8080
 
-# Healthcheck
+# Healthcheck - use GET instead of HEAD
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/healthz || exit 1
+    CMD wget --no-verbose --tries=1 -O- http://localhost:8080/api/healthz || exit 1
 
 CMD ["./main"]
