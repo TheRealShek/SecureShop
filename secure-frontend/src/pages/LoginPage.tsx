@@ -121,17 +121,17 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50 to-blue-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50 to-blue-50 px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-md w-full space-y-4 animate-fade-in">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <LockClosedIcon className="h-10 w-10 text-white" />
+          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <LockClosedIcon className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-4xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">
             {isRegisterMode ? 'Create Account' : 'Welcome back'}
           </h2>
-          <p className="mt-3 text-base text-slate-600">
+          <p className="mt-2 text-sm text-slate-600">
             {isRegisterMode 
               ? 'Join SecureShop as a buyer or seller' 
               : 'Sign in to your SecureShop account'
@@ -140,8 +140,8 @@ export function LoginPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white py-10 px-8 shadow-2xl rounded-2xl border border-slate-200 backdrop-blur-sm">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="bg-white py-6 px-8 shadow-2xl rounded-2xl border border-slate-200 backdrop-blur-sm">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Error Message */}
             {error && (
               <div className="rounded-xl bg-red-50 border border-red-200 p-4 animate-shake shadow-sm">
@@ -266,7 +266,7 @@ export function LoginPage() {
             )}
 
             {/* Submit Button */}
-            <div className="pt-4">
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading || isLoading}
@@ -284,7 +284,7 @@ export function LoginPage() {
           </form>
 
           {/* Toggle Mode */}
-          <div className="mt-8 text-center">
+          <div className="mt-4 text-center">
             <button
               type="button"
               onClick={toggleMode}
@@ -304,6 +304,63 @@ export function LoginPage() {
             SecureShop - Your trusted e-commerce platform
           </p>
         </div>
+
+        {/* Demo Credentials - Only show on login mode */}
+        {!isRegisterMode && (
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 px-4 py-3">
+            <p className="text-xs text-slate-500 text-center mb-2">Try Demo Accounts</p>
+            
+            <div className="grid grid-cols-3 gap-2">
+              {/* Admin Demo Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@secureshop.com');
+                  setPassword('admin123');
+                  setError('');
+                }}
+                className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 border border-purple-200 rounded-lg transition-all duration-200 group"
+              >
+                <p className="text-sm font-semibold text-slate-800 mb-1">Admin</p>
+                <span className="text-xs text-indigo-600 font-medium group-hover:text-indigo-700">
+                  Auto-fill
+                </span>
+              </button>
+
+              {/* Seller Demo Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('seller@secureshop.com');
+                  setPassword('seller123');
+                  setError('');
+                }}
+                className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 rounded-lg transition-all duration-200 group"
+              >
+                <p className="text-sm font-semibold text-slate-800 mb-1">Seller</p>
+                <span className="text-xs text-green-600 font-medium group-hover:text-green-700">
+                  Auto-fill
+                </span>
+              </button>
+
+              {/* Buyer Demo Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('buyer@secureshop.com');
+                  setPassword('buyer123');
+                  setError('');
+                }}
+                className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border border-blue-200 rounded-lg transition-all duration-200 group"
+              >
+                <p className="text-sm font-semibold text-slate-800 mb-1">Buyer</p>
+                <span className="text-xs text-blue-600 font-medium group-hover:text-blue-700">
+                  Auto-fill
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
