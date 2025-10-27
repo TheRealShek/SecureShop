@@ -16,14 +16,13 @@ RUN test -n "$VITE_API_URL" || (echo "VITE_API_URL build arg is required" && exi
 # Set as environment variables for the build
 ENV VITE_API_URL=$VITE_API_URL \
     VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
-    NODE_ENV=production
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 # Copy package files first (better layer caching)
 COPY package*.json ./
 
-# Install dependencies (including dev dependencies needed for build)
-RUN npm ci && \
+# Install ALL dependencies (including dev dependencies needed for build)
+RUN npm ci --include=dev && \
     npm cache clean --force
 
 # Copy source code
