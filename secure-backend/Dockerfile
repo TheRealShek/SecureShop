@@ -13,12 +13,9 @@ RUN go mod download && go mod verify
 # Copy source code
 COPY . .
 
-# Tidy go.mod before building
-RUN go mod tidy
-
-# Build the application with optimizations
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags="-w -s" -a -installsuffix cgo -o main .
+# Tidy go.mod and build in one step (faster)
+RUN go mod tidy && \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main .
 
 # Final production stage
 FROM alpine:latest
