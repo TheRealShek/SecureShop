@@ -13,6 +13,9 @@ RUN go mod download && go mod verify
 # Copy source code
 COPY . .
 
+# Tidy go.mod before building
+RUN go mod tidy
+
 # Build the application with optimizations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-w -s" -a -installsuffix cgo -o main .
